@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<base href="/">
 <title>ПодариМомент — подарки нового поколения</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
@@ -1841,18 +1842,49 @@ window.sendAdmMsg = sendAdmMsg; window.sendCliMsg = sendCliMsg;
 
 // ROUTING
 const VIEWS = ['landing','order','success','admin','catalog','account'];
-function go(v){
+function viewToPath(v, prod){
+  if(v==='landing') return '/';
+  if(v==='order' && prod) return '/order/'+prod;
+  return '/'+v;
+}
+function pathToRoute(path){
+  const p = (path || '/').replace(/\/+$/,'') || '/';
+  if(p==='/' || p==='') return {view:'landing'};
+  const parts = p.split('/').filter(Boolean);
+  const v = parts[0];
+  if(!VIEWS.includes(v)) return {view:'landing'};
+  const out = {view:v};
+  if(v==='order' && parts[1]) out.prod = parts[1];
+  return out;
+}
+function go(v, opts){
+  opts = opts || {};
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
   if(v==='admin' && typeof renderAdmin==='function') renderAdmin();
   if(v==='account' && typeof renderAccount==='function') renderAccount();
   if(v==='success') burstConfetti();
-  // update dock active state
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
-  // close mobile menu
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');
   const bg=document.getElementById('burger');if(bg)bg.classList.remove('open');
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(!opts.skipScroll) window.scrollTo({top:0,behavior:'smooth'});
+  if(!opts.skipHistory){
+    const path = viewToPath(v, opts.prod);
+    if(location.pathname !== path) history.pushState({view:v, prod:opts.prod}, '', path);
+    document.title = ({
+      landing:'ПодариМомент — подарки нового поколения',
+      order:'Оформление заказа · ПодариМомент',
+      success:'Готово! · ПодариМомент',
+      admin:'Админ-панель · ПодариМомент',
+      catalog:'Каталог · ПодариМомент',
+      account:'Личный кабинет · ПодариМомент'
+    })[v] || 'ПодариМомент';
+  }
 }
+window.addEventListener('popstate', e=>{
+  const r = (e.state && e.state.view) ? e.state : pathToRoute(location.pathname);
+  go(r.view, {skipHistory:true, skipScroll:true, prod:r.prod});
+  if(r.view==='order' && r.prod && typeof setProduct==='function') setTimeout(()=>setProduct(r.prod), 20);
+});
 function burstConfetti(){
   const host=document.getElementById('confetti-burst');if(!host)return;
   host.innerHTML='';
@@ -1876,7 +1908,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 window.go = go;
 function scrollTo2(id){go('landing');setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);}
-function goOrder(p){go('order');setTimeout(()=>setProduct(p),20);}
+function goOrder(p){go('order',{prod:p});setTimeout(()=>setProduct(p),20);}
 window.goOrder = goOrder;
 
 // PRODUCT TABS
@@ -2161,13 +2193,17 @@ document.getElementById('fab').addEventListener('click',()=>{
 // ORDER FORM submit
 document.getElementById('order-form').addEventListener('submit',e=>{e.preventDefault();go('success');});
 
-// INIT
+// INIT — read URL and route
 buildProdTabs();
-setProduct('song');
 buildDock();
 buildCatTabs();
 renderCat('all');
-go('landing');
+(function bootRoute(){
+  const r = pathToRoute(location.pathname);
+  setProduct(r.prod && PRICES[r.prod] ? r.prod : 'song');
+  go(r.view, {skipScroll:true, prod:r.prod});
+  history.replaceState({view:r.view, prod:r.prod}, '', viewToPath(r.view, r.prod));
+})();
 </script>
 </body>
 </html>

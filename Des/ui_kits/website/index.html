@@ -69,12 +69,19 @@ img{max-width:100%;display:block}
 .loader-pct{font-size:10px;letter-spacing:0.25em;color:rgba(255,255,255,0.4);font-weight:600}
 
 .app{max-width:1280px;margin:0 auto;padding:14px clamp(12px,3vw,28px) 120px;position:relative;z-index:1}
+.topbar{position:sticky;top:0;z-index:50;width:100%;background:rgba(10,10,15,0.78);backdrop-filter:blur(28px) saturate(140%);-webkit-backdrop-filter:blur(28px) saturate(140%);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1440px;margin:0 auto;padding:12px clamp(16px,3vw,32px);display:flex;align-items:center;justify-content:space-between;gap:12px}
 .bg-glow{position:fixed;width:min(800px,80vw);aspect-ratio:1;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0}
 .bg-glow.b1{background:rgba(255,107,53,0.18);top:-200px;left:-200px}
 .bg-glow.b2{background:rgba(212,200,255,0.15);bottom:-200px;right:-200px}
 
 /* TOPNAV */
-.topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-radius:22px;background:rgba(20,20,31,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--line);margin-bottom:24px;position:sticky;top:8px;z-index:50;gap:8px}
+.topnav{display:flex;align-items:center;justify-content:space-between;width:100%;gap:12px}
+.btn-login{padding:9px 16px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#fff;font-weight:600;font-size:13px;letter-spacing:-0.01em;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s var(--ease);white-space:nowrap}
+.btn-login:hover{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.22);transform:translateY(-1px)}
+.btn-login svg{width:14px;height:14px;opacity:0.8}
+.topnav-cta-group{display:flex;align-items:center;gap:8px}
+@media (max-width:520px){.btn-login{padding:8px 12px;font-size:12px}.btn-login span{display:none}}
 .brand{display:flex;align-items:center;gap:12px;cursor:pointer;background:none;padding:0;flex-shrink:0;border:none}
 
 /* === НОВЫЙ LOGO (orizn-style) === */
@@ -741,6 +748,36 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
   .di-gender,.pcard-gender-glow,.reveal-stage::before,.reveal-pill::before,.pcard-confetti span,.voice-chip.playing .vc-wave i{animation:none !important}
   .pcard-confetti{display:none}
 }
+
+/* === ORDER HERO + step indicators === */
+.order-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin:8px 0 20px;padding:24px;border-radius:24px;background:linear-gradient(180deg,#1a1a26,#14141f);border:1px solid var(--line);position:relative;overflow:hidden}
+.order-hero[data-prod="gender"]::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 20% 30%,rgba(111,182,255,0.18),transparent 55%),radial-gradient(circle at 80% 70%,rgba(255,143,180,0.22),transparent 55%);filter:blur(40px);pointer-events:none;animation:gpFloat 18s ease-in-out infinite}
+.order-hero-text{position:relative;z-index:1;flex:1;min-width:260px}
+.order-hero-text h2{font-size:clamp(28px,4.5vw,46px);margin:6px 0 8px;line-height:1.02}
+.order-hero-sub{font-size:14px;line-height:1.5;opacity:0.7;margin:0;max-width:560px}
+.order-hero-meta{position:relative;z-index:1;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.order-hero-icon{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:radial-gradient(circle at 35% 28%,#cfe6ff,#6fb6ff 45%,#ff8fb4 90%);box-shadow:0 12px 30px rgba(255,143,180,0.35),inset 0 1px 0 rgba(255,255,255,0.3)}
+.order-hero-icon svg{width:32px;height:32px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.3))}
+.order-hero-pricebox{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.order-hero-priceval{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.order-hero-pricemeta{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.55;font-weight:700}
+
+/* Mini "Как работает" strip — только для gender */
+.how-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+@media (max-width:720px){.how-mini{grid-template-columns:1fr}}
+.how-mini-step{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid var(--line)}
+.how-mini-num{width:32px;height:32px;border-radius:50%;background:var(--grad);color:#1a0d05;font-weight:800;font-size:14px;display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 12px rgba(255,107,53,0.25)}
+.how-mini-step b{display:block;font-size:13px;font-weight:700;letter-spacing:-0.01em}
+.how-mini-step span{display:block;font-size:11px;opacity:0.55;margin-top:2px}
+
+/* Numbered form section blocks */
+.form-step{position:relative;padding:18px;border-radius:18px;background:rgba(255,255,255,0.02);border:1px solid var(--line);margin-bottom:14px}
+.form-step-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.form-step-num{width:24px;height:24px;border-radius:50%;background:#22222e;color:rgba(255,255,255,0.6);font-weight:700;font-size:12px;display:grid;place-items:center;flex-shrink:0}
+.form-step.done .form-step-num{background:var(--grad);color:#1a0d05}
+.form-step-title{font-size:14px;font-weight:700;letter-spacing:-0.01em}
+.form-step-hint{font-size:11px;opacity:0.5;font-weight:500;margin-left:auto;letter-spacing:0.02em}
+.field-help{font-size:11px;opacity:0.5;line-height:1.4;margin-top:4px;padding-left:4px}
 </style>
 </head>
 <body>
@@ -774,8 +811,8 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 
 <div class="bg-glow b1"></div><div class="bg-glow b2"></div>
 
-<div class="app">
-  <nav class="topnav">
+<header class="topbar">
+ <nav class="topnav topbar-inner" aria-label="Главная навигация">
     <button class="brand" data-go="landing">
       <div class="logo3d">
         <div class="logo3d-flare"></div>
@@ -804,9 +841,17 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
       <a data-go="admin" style="opacity:0.4">Админ</a>
     </div>
     <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
-    <button class="cta" data-go="order">Заказать →</button>
+    <div class="topnav-cta-group">
+      <button class="btn-login" data-go="account" aria-label="Войти в личный кабинет">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Войти</span>
+      </button>
+      <button class="cta" data-go="order">Заказать →</button>
+    </div>
   </nav>
+</header>
 
+<div class="app">
   <div class="mobile-menu" id="mobile-menu">
     <a data-scroll="products">Продукты</a>
     <a data-go="catalog">Каталог</a>
@@ -950,12 +995,28 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 
   <div id="view-order" style="display:none">
     <section class="section order">
-      <div class="section-head" style="text-align:center"><div class="kicker">Создать</div><h2>Заполни <em>форму</em></h2></div>
+      <div class="order-hero" id="order-hero">
+        <div class="order-hero-text">
+          <div class="kicker" id="order-kicker">Шаг 1 из 2 · детали</div>
+          <h2 id="order-title">Заполни <em>форму</em></h2>
+          <p class="order-hero-sub" id="order-sub">Расскажите о подарке — мы вернёмся с готовым файлом за 5 минут.</p>
+        </div>
+        <div class="order-hero-meta" id="order-hero-meta"></div>
+      </div>
+
+      <div class="how-mini" id="how-mini" style="display:none">
+        <div class="how-mini-step"><div class="how-mini-num">1</div><div><b>Выберите голос и стиль</b><span>Слушайте превью прямо в форме</span></div></div>
+        <div class="how-mini-step"><div class="how-mini-num">2</div><div><b>Опишите сценарий</b><span>Свои слова или готовый шаблон</span></div></div>
+        <div class="how-mini-step"><div class="how-mini-num">3</div><div><b>Получите MP3/MP4</b><span>На email за 5 минут после оплаты</span></div></div>
+      </div>
+
       <div class="tabs-pill" id="prod-tabs"></div>
       <form class="form" id="order-form">
-        <div class="field-row">
-          <div class="field"><label>Имя получателя</label><input class="input" placeholder="Кому?" value="Анна"></div>
-          <div class="field"><label>Email доставки</label><input class="input" type="email" value="anna@mail.ru"></div>
+        <div id="generic-top-fields">
+          <div class="field-row">
+            <div class="field"><label>Имя получателя</label><input class="input" placeholder="Кому?" value="Анна"></div>
+            <div class="field"><label>Email доставки</label><input class="input" type="email" value="anna@mail.ru"></div>
+          </div>
         </div>
         <div id="prod-fields"></div>
         <div class="order-foot"><div class="order-total"><div class="kicker">Итого</div><div class="order-price"><span id="op">299</span> ₽<small>с НДС</small></div></div><button class="cta" type="submit">Оплатить →</button></div>
@@ -1394,22 +1455,33 @@ const FORMS = {
   gender: () => `
     <div class="reveal-stage" id="reveal-stage" data-reveal="boy" aria-label="Превью анонса">
       <div class="reveal-stage-inner">
-        <div class="reveal-eyebrow">Превью · реакция гостей</div>
+        <div class="reveal-eyebrow">Так это будет звучать на празднике</div>
         <div class="reveal-headline">«У вас будет…»</div>
         <div class="reveal-pill" id="reveal-pill">💙 <span id="reveal-word">Мальчик</span></div>
         <div class="reveal-meta" id="reveal-meta">мужской голос · кинематика · 30 секунд</div>
       </div>
     </div>
 
-    <div class="field" style="margin-bottom:14px"><label>Что обнародуем</label>
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">1</div>
+        <div class="form-step-title">Что обнародуем</div>
+        <div class="form-step-hint">обязательно</div>
+      </div>
       <div class="chips reveal-chips" data-group="greveal">
         <div class="chip act" data-rv="boy">💙 Мальчик</div>
         <div class="chip" data-rv="girl">💗 Девочка</div>
         <div class="chip" data-rv="surprise">❓ Сюрприз — пусть выберет ИИ</div>
       </div>
+      <div class="field-help">«Сюрприз» — ИИ сам бросит монетку и не покажет вам результат до раскрытия. Можно использовать как настоящий gender-reveal даже от себя.</div>
     </div>
 
-    <div class="field" style="margin-bottom:14px"><label>Голос объявляющего <small style="opacity:.5;font-weight:500;text-transform:none;letter-spacing:0">— нажмите ▶, чтобы послушать</small></label>
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">2</div>
+        <div class="form-step-title">Голос объявляющего</div>
+        <div class="form-step-hint">нажмите ▶ — послушаете</div>
+      </div>
       ${voiceChips('gvoice',[
         {id:'male',label:'Мужской',emoji:'👨',freq:160,type:'sine'},
         {id:'female',label:'Женский',emoji:'👩',freq:240,type:'sine'},
@@ -1417,45 +1489,71 @@ const FORMS = {
         {id:'star',label:'Звезда',emoji:'🎤',freq:200,type:'sawtooth',add:'+200 ₽'},
         {id:'showman',label:'Шоумен',emoji:'🎙',freq:180,type:'square'}
       ], 0)}
+      <div class="field-help">«Звезда» — узнаваемый голос знаменитости (Нагиев, Харламов и др.). Превью отражает тембр, финальный голос будет более чистым.</div>
     </div>
 
-    <div class="field" style="margin-bottom:14px"><label>Стиль анонса</label>
-      ${chips('gvibe',['🥹 Душевно','🎉 Громко-весело','🎬 Кинематика','🤡 С приколом','✨ Загадочно'], 2)}
-    </div>
-
-    <div class="field" style="margin-bottom:14px"><label>Формат</label>
-      ${chips('gfmt',['🔊 MP3 (для колонки)','🎬 MP4 — видео с анимацией','📱 Вертикальное (для соцсетей)'], 1)}
-    </div>
-
-    <div class="field-row">
-      <div class="field"><label>Имена родителей</label><input class="input" placeholder="Анна и Михаил" value="Анна и Михаил"></div>
-      <div class="field"><label>Длительность</label>
-        <select class="input" id="gdur">
-          <option>15 секунд</option>
-          <option selected>30 секунд</option>
-          <option>1 минута (+200 ₽)</option>
-        </select>
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">3</div>
+        <div class="form-step-title">Стиль и формат</div>
+        <div class="form-step-hint">как звучим и куда отдаём</div>
+      </div>
+      <div class="field" style="margin-bottom:14px"><label>Стиль анонса</label>
+        ${chips('gvibe',['🥹 Душевно','🎉 Громко-весело','🎬 Кинематика','🤡 С приколом','✨ Загадочно'], 2)}
+      </div>
+      <div class="field"><label>Формат файла</label>
+        ${chips('gfmt',['🔊 MP3 — для колонки','🎬 MP4 — видео 16:9','📱 Вертикальное 9:16'], 1)}
+        <div class="field-help">MP3 включают через bluetooth на празднике. MP4 — для большого экрана. Вертикальное — чтобы выложить в сторис сразу после реакции гостей.</div>
       </div>
     </div>
 
-    <div class="field" style="margin-top:14px"><label>Сценарий / о чём сказать</label>
-      <textarea class="input" id="gscript" rows="3" placeholder="Опишите драматургию анонса своими словами…">После 5-секундной интриги драматично объявляем: «У вас будет… сын!». Поздравляем родителей.</textarea>
-      <div class="script-templates" data-group="gtmpl">
-        <button type="button" class="script-tmpl" data-tmpl="cinema">🎬 Кинодрама</button>
-        <button type="button" class="script-tmpl" data-tmpl="fun">😂 С приколом</button>
-        <button type="button" class="script-tmpl" data-tmpl="soul">🥹 Душевно</button>
-        <button type="button" class="script-tmpl" data-tmpl="quiet">✨ Загадочно</button>
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">4</div>
+        <div class="form-step-title">Сценарий и детали</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Имена родителей</label><input class="input" placeholder="Анна и Михаил" value="Анна и Михаил"></div>
+        <div class="field"><label>Длительность</label>
+          <select class="input" id="gdur">
+            <option>15 секунд</option>
+            <option selected>30 секунд</option>
+            <option>1 минута (+200 ₽)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Сценарий — о чём сказать</label>
+        <textarea class="input" id="gscript" rows="3" placeholder="Например: «5-секундная интрига → объявление пола → поздравление родителям»">После 5-секундной интриги драматично объявляем: «У вас будет… сын!». Поздравляем родителей.</textarea>
+        <div class="field-help">Пишите своими словами — ИИ адаптирует под выбранный стиль. Или возьмите готовый шаблон ниже одним кликом.</div>
+        <div class="script-templates" data-group="gtmpl">
+          <button type="button" class="script-tmpl" data-tmpl="cinema">🎬 Кинодрама</button>
+          <button type="button" class="script-tmpl" data-tmpl="fun">😂 С приколом</button>
+          <button type="button" class="script-tmpl" data-tmpl="soul">🥹 Душевно</button>
+          <button type="button" class="script-tmpl" data-tmpl="quiet">✨ Загадочно</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Фото родителей — необязательно</label>${uploader('Загрузи фото',0)}
+        <div class="field-help">Поможет ИИ задать тон голоса под ваш праздник. Можно пропустить.</div>
       </div>
     </div>
 
-    <div class="field" style="margin-top:14px"><label>Фото родителей <small style="opacity:.5;font-weight:500;text-transform:none;letter-spacing:0">— необязательно, поможет ИИ подобрать тон</small></label>${uploader('Загрузи фото',0)}</div>
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">5</div>
+        <div class="form-step-title">Куда прислать готовый файл</div>
+      </div>
+      <div class="field"><label>Email доставки</label>
+        <input class="input" type="email" id="gemail" placeholder="ваш@email.ru" value="anna@mail.ru">
+        <div class="field-help">Готовый MP3/MP4 придёт в течение 5 минут после оплаты. Ссылка живёт 30 дней.</div>
+      </div>
+    </div>
 
     <div class="price-sticky" id="gprice" role="status" aria-live="polite">
       <div>
-        <div class="price-sticky-meta">Итого</div>
+        <div class="price-sticky-meta">Готово к оплате</div>
         <div class="price-sticky-row"><b id="gprice-sum">599 ₽</b><span class="ps-add" id="gprice-add">базовый пакет</span></div>
       </div>
-      <button type="button" class="cta" data-go="success" style="padding:10px 16px">Оформить →</button>
+      <div class="price-sticky-meta" style="opacity:0.5;margin:0">↓ кнопка ниже</div>
     </div>`,
 
   market: () => `
@@ -1924,6 +2022,45 @@ function setProduct(prod){
   });
   document.getElementById('prod-fields').innerHTML = FORMS[prod] ? FORMS[prod]() : '';
   document.getElementById('op').textContent = PRICES[prod];
+
+  // Контекстный order-hero под выбранный продукт
+  const hero = document.getElementById('order-hero');
+  const heroMeta = document.getElementById('order-hero-meta');
+  const heroTitle = document.getElementById('order-title');
+  const heroSub = document.getElementById('order-sub');
+  const heroKicker = document.getElementById('order-kicker');
+  const howMini = document.getElementById('how-mini');
+  const genericTop = document.getElementById('generic-top-fields');
+  if(hero) hero.dataset.prod = prod;
+  const HEAD = {
+    gender: {
+      title: 'Голос для <em>гендер-пати</em>',
+      sub: 'Премиум-анонс пола ребёнка от ИИ. Слушайте превью голосов прямо в форме — это часть процесса.',
+      kicker: 'новый продукт · 5 минут до готового файла',
+      icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 7 Q9 4 12 8 Q15 12 20 8 Q19 14 14 13 Q10 13 8 16 Q5 13 4 7 Z" fill="currentColor" opacity="0.85"/><path d="M20 7 Q15 4 12 8 Q9 12 4 8 Q5 14 10 13 Q14 13 16 16 Q19 13 20 7 Z" fill="currentColor" opacity="0.55"/><circle cx="12" cy="10.5" r="2" fill="#fff5d0"/></svg>'
+    }
+  };
+  const h = HEAD[prod];
+  if(h){
+    if(heroTitle) heroTitle.innerHTML = h.title;
+    if(heroSub) heroSub.textContent = h.sub;
+    if(heroKicker) heroKicker.textContent = h.kicker;
+    if(heroMeta){
+      heroMeta.innerHTML = `<div class="order-hero-icon" aria-hidden="true">${h.icon}</div><div class="order-hero-pricebox"><div class="order-hero-priceval">${PRICES[prod]} ₽</div><div class="order-hero-pricemeta">базовый пакет</div></div>`;
+    }
+    if(howMini) howMini.style.display = prod==='gender' ? 'grid' : 'none';
+    if(genericTop) genericTop.style.display = prod==='gender' ? 'none' : 'block';
+  } else {
+    if(heroTitle) heroTitle.innerHTML = 'Заполни <em>форму</em>';
+    if(heroSub) heroSub.textContent = 'Расскажите о подарке — мы вернёмся с готовым файлом за 5 минут.';
+    if(heroKicker) heroKicker.textContent = 'Шаг 1 из 2 · детали';
+    if(heroMeta){
+      heroMeta.innerHTML = `<div class="order-hero-pricebox"><div class="order-hero-priceval">${PRICES[prod]} ₽</div><div class="order-hero-pricemeta">за продукт</div></div>`;
+    }
+    if(howMini) howMini.style.display = 'none';
+    if(genericTop) genericTop.style.display = 'block';
+  }
+
   if(prod==='gender') initGenderForm();
 }
 window.setProduct = setProduct;

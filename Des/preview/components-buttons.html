@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body)}
+  .wrap{padding:28px 32px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+  .btn{font-family:var(--pm-font-body);font-weight:600;font-size:15px;padding:14px 24px;border-radius:14px;border:none;cursor:pointer;transition:all .16s var(--pm-ease-out);display:inline-flex;align-items:center;gap:8px}
+  .btn-primary{background:var(--pm-grad-flame);color:#1a0d05}
+  .btn-primary:hover{background:linear-gradient(135deg,#ff8458,#ffe199);box-shadow:var(--pm-shadow-glow)}
+  .btn-ghost{background:transparent;color:var(--pm-fg-1);border:1px solid var(--pm-line-2)}
+  .btn-ghost:hover{border-color:var(--pm-line-3);background:rgba(255,255,255,0.04)}
+  .btn-solid{background:var(--pm-bg-elev-2);color:var(--pm-fg-1);border:1px solid var(--pm-line-2)}
+  .btn-link{background:transparent;color:var(--pm-orange);padding:14px 8px}
+  .btn-disabled{opacity:0.4;cursor:not-allowed}
+  .arrow{display:inline-block;transition:transform .2s var(--pm-ease-out)}
+  .btn:hover .arrow{transform:translateX(3px)}
+</style></head>
+<body><div class="wrap">
+  <button class="btn btn-primary">Заказать <span class="arrow">→</span></button>
+  <button class="btn btn-ghost">Посмотреть пример</button>
+  <button class="btn btn-solid">Войти</button>
+  <button class="btn btn-link">Узнать больше →</button>
+  <button class="btn btn-primary btn-disabled">Загрузка…</button>
+</div></body></html>

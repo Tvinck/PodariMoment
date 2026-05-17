@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:#0a0a0f;color:#fff;font-family:var(--pm-font-bold)}
+  .wrap{padding:22px 24px;display:flex;flex-direction:column;gap:14px;max-width:600px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  label{font-family:var(--pm-font-bold);font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.01em;padding-left:4px}
+  .input{font-family:var(--pm-font-bold);font-weight:600;border:none;padding:20px 24px;border-radius:24px;font-size:18px;outline:none;letter-spacing:-0.02em;width:100%;box-sizing:border-box}
+  .i-peach{background:#ffd9c2;color:#1a0d05}
+  .i-mint{background:#bef0c9;color:#0a3d1f}
+  .i-lilac{background:#d4c8ff;color:#1f1145}
+  .input::placeholder{color:rgba(26,13,5,0.45);font-weight:500}
+  .err-input{background:#ffc2c2;color:#5a0a14}
+  .errmsg{font-size:13px;color:#ff8a9a;font-weight:600;padding-left:4px}
+  select.input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231f1145' stroke-width='3' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 24px center;padding-right:56px}
+  .input:focus{box-shadow:0 0 0 3px #ff6b35}
+</style></head>
+<body><div class="wrap">
+  <div class="field"><label>Имя получателя</label><input class="input i-peach" value="Анна" placeholder="Кому подарок?"></div>
+  <div class="field"><label>Email</label><input class="input err-input" value="anna@" type="email"><div class="errmsg">Кажется, в адресе опечатка</div></div>
+  <div class="field"><label>Повод</label><select class="input i-lilac"><option>День рождения</option><option>Юбилей</option><option>Свадьба</option><option>Новый год</option></select></div>
+</div></body></html>

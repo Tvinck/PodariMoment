@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);font-family:var(--pm-font-body)}
+  .wrap{padding:24px 32px;display:flex;flex-direction:column;gap:8px}
+  .row{display:grid;grid-template-columns:80px 1fr auto;gap:16px;align-items:center;padding:10px 12px;border-radius:10px;background:var(--pm-bg-elev-1)}
+  .sample{height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px}
+  .name{font-size:13px;font-weight:600;color:var(--pm-fg-1)}
+  .hex{font-family:var(--pm-font-mono);font-size:11px;color:var(--pm-fg-3)}
+</style></head>
+<body><div class="wrap">
+  <div class="row"><div class="sample" style="background:#f7f5f0;color:#0a0a0f">Aa</div><div class="name">FG 1 · Primary text</div><div class="hex">#f7f5f0</div></div>
+  <div class="row"><div class="sample" style="background:#c9c6c0;color:#0a0a0f">Aa</div><div class="name">FG 2 · Secondary</div><div class="hex">#c9c6c0</div></div>
+  <div class="row"><div class="sample" style="background:#8a8780;color:#0a0a0f">Aa</div><div class="name">FG 3 · Tertiary</div><div class="hex">#8a8780</div></div>
+  <div class="row"><div class="sample" style="background:#5a5750;color:#f7f5f0">Aa</div><div class="name">FG 4 · Disabled</div><div class="hex">#5a5750</div></div>
+</div></body></html>

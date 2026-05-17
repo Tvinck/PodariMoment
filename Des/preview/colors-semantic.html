@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body)}
+  .wrap{padding:24px 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .sw{display:flex;flex-direction:column;gap:8px}
+  .chip{height:56px;border-radius:12px}
+  .name{font-size:12px;font-weight:600}
+  .hex{font-family:var(--pm-font-mono);font-size:10px;color:var(--pm-fg-3)}
+</style></head>
+<body><div class="wrap">
+  <div class="sw"><div class="chip" style="background:#4ade80"></div><div class="name">Success</div><div class="hex">#4ade80</div></div>
+  <div class="sw"><div class="chip" style="background:#ffd166"></div><div class="name">Warning</div><div class="hex">#ffd166</div></div>
+  <div class="sw"><div class="chip" style="background:#ff5470"></div><div class="name">Error</div><div class="hex">#ff5470</div></div>
+  <div class="sw"><div class="chip" style="background:#7cc4ff"></div><div class="name">Info</div><div class="hex">#7cc4ff</div></div>
+</div></body></html>

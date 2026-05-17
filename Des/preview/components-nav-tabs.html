@@ -1,0 +1,42 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:#0a0a0f;color:#fff;font-family:var(--pm-font-bold);overflow:hidden}
+  .stage{padding:28px;display:flex;flex-direction:column;gap:20px;align-items:center}
+
+  /* Floating dock */
+  .dock{display:flex;align-items:center;gap:6px;padding:8px;background:rgba(28,28,38,0.92);border:1px solid rgba(255,255,255,0.08);border-radius:999px;backdrop-filter:blur(24px);box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+  .logo{width:52px;height:52px;border-radius:50%;background:#1f1f2e;display:grid;place-items:center;color:#d4c8ff;font-family:var(--pm-font-bold);font-weight:700;font-size:18px;letter-spacing:-0.06em}
+  .logo svg{width:22px;height:22px}
+  .pill{padding:16px 24px;border-radius:999px;font-family:var(--pm-font-bold);font-weight:500;font-size:15px;letter-spacing:-0.01em;cursor:pointer;transition:transform .25s var(--pm-ease-spring);white-space:nowrap}
+  .pill:hover{transform:translateY(-2px)}
+  .p-lilac{background:#d4c8ff;color:#1f1145}
+  .p-peach{background:#ffd9c2;color:#5c2410}
+  .p-sky{background:#bee3f5;color:#0a3a5c}
+  .icon{width:52px;height:52px;border-radius:50%;background:#1f1f2e;display:grid;place-items:center;color:#fff;cursor:pointer;transition:background .2s}
+  .icon:hover{background:#2d2d40}
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:8px;background:rgba(28,28,38,0.92);border:1px solid rgba(255,255,255,0.08);border-radius:999px;backdrop-filter:blur(24px)}
+  .tab{padding:14px 22px;border-radius:999px;font-family:var(--pm-font-bold);font-weight:500;font-size:14px;letter-spacing:-0.01em;cursor:pointer;color:rgba(255,255,255,0.6);transition:all .2s var(--pm-ease-spring)}
+  .tab:hover{color:#fff}
+  .tab.act{background:#ffd9c2;color:#5c2410;font-weight:600}
+</style></head>
+<body><div class="stage">
+  <div class="dock">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l4 4M9 5l-4 4M15 5l4 4M19 5l-4 4M5 15l4 4M9 15l-4 4M15 15l4 4M19 15l-4 4"/></svg>
+    </div>
+    <div class="pill p-lilac">Песня</div>
+    <div class="pill p-peach">Видео</div>
+    <div class="pill p-sky">Звезда</div>
+    <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab act">Песня</div>
+    <div class="tab">Видео</div>
+    <div class="tab">Звезда</div>
+    <div class="tab">Все подарки</div>
+  </div>
+</div></body></html>

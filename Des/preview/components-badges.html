@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body)}
+  .wrap{padding:24px 32px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase}
+  .b-gold{background:linear-gradient(135deg,#ffd166,#e6b347);color:#1a0d05}
+  .b-flame{background:var(--pm-grad-flame);color:#1a0d05}
+  .b-outline{background:transparent;color:var(--pm-gold);border:1px solid var(--pm-gold)}
+  .b-soft{background:rgba(255,209,102,0.14);color:var(--pm-gold)}
+  .b-success{background:rgba(74,222,128,0.14);color:#4ade80}
+  .b-error{background:rgba(255,84,112,0.14);color:#ff5470}
+  .price{display:inline-flex;align-items:baseline;gap:4px;padding:8px 14px;border-radius:999px;background:var(--pm-grad-flame);color:#1a0d05;font-weight:800;font-size:15px}
+  .price small{font-size:11px;letter-spacing:0.1em}
+</style></head>
+<body><div class="wrap">
+  <div class="badge b-gold">Премиум</div>
+  <div class="badge b-flame">Хит</div>
+  <div class="badge b-outline">Новое</div>
+  <div class="badge b-soft">Скидка 20%</div>
+  <div class="badge b-success">Оплачено</div>
+  <div class="badge b-error">Ошибка</div>
+  <div class="price">299 <small>₽</small></div>
+</div></body></html>

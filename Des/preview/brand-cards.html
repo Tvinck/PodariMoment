@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body);overflow:hidden}
+  .wrap{padding:24px;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:18px;perspective:1400px}
+  .card{position:relative;aspect-ratio:5/7;border-radius:22px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;font-family:var(--pm-font-bold);box-shadow:0 24px 48px rgba(0,0,0,0.55),0 0 30px rgba(255,107,53,0.18);transition:transform .4s var(--pm-ease-out)}
+  .card:hover{transform:translateY(-6px)}
+  .c1{background:radial-gradient(120% 100% at 0% 0%,#ffe199 0%,#ff6b35 45%,#c026d3 100%);transform:rotate(-4deg)}
+  .c2{background:radial-gradient(120% 100% at 100% 0%,#ffd166 0%,#ff6b35 50%,#7c2d12 100%);transform:rotate(2deg)}
+  .c3{background:radial-gradient(120% 100% at 50% 100%,#ec4899 0%,#7c2d12 50%,#1e1b4b 100%);transform:rotate(5deg)}
+  .brand{font-family:var(--pm-font-bold);font-weight:800;font-size:30px;line-height:0.95;letter-spacing:-0.04em;color:#1a0d05;text-shadow:0 2px 0 rgba(255,255,255,0.25)}
+  .brand em{font-style:normal;font-weight:400;display:block;color:#1a0d05;opacity:0.85}
+  .light .brand{color:#fff;text-shadow:0 2px 12px rgba(0,0,0,0.3)}
+  .light .brand em{color:#fff;opacity:0.9}
+  .tap{display:flex;align-items:center;gap:6px;color:#1a0d05;font-size:14px;font-weight:700}
+  .light .tap{color:#fff}
+  .chip{width:34px;height:26px;border-radius:5px;background:linear-gradient(135deg,rgba(255,255,255,0.7),rgba(255,255,255,0.3));align-self:flex-end;box-shadow:inset 0 1px 0 rgba(255,255,255,0.5)}
+  .num{font-family:var(--pm-font-bold);font-weight:800;font-size:16px;letter-spacing:0.18em;color:#1a0d05;opacity:0.7}
+  .light .num{color:#fff}
+  .pricetag{position:absolute;top:18px;right:18px;background:#0a0a0f;color:#fff;font-family:var(--pm-font-bold);font-weight:800;font-size:18px;letter-spacing:-0.02em;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.15);z-index:5;display:flex;align-items:center;gap:6px}
+  .pricetag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pm-grad-flame);box-shadow:0 0 8px rgba(255,107,53,0.8)}
+  .c1 .pricetag{background:#1a0d05;color:#ffd166}
+  .photo{position:absolute;border-radius:14px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.4);border:3px solid rgba(255,255,255,0.95)}
+  .p1{width:80px;height:80px;top:30%;left:-15px;transform:rotate(-8deg);background:linear-gradient(135deg,#fda4af,#f43f5e)}
+  .p2{width:70px;height:70px;bottom:25%;right:-10px;transform:rotate(6deg);background:linear-gradient(135deg,#86efac,#16a34a)}
+  .photo svg{width:100%;height:100%;display:block;opacity:0.85}
+  .glare{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.35) 0%,transparent 40%);pointer-events:none}
+  .note{position:absolute;font-size:36px;color:rgba(26,13,5,0.4)}
+  .light .note{color:rgba(255,255,255,0.5)}
+</style></head>
+<body><div class="wrap">
+  <div class="card c1">
+    <div class="glare"></div>
+    <div class="brand">подари<em>момент</em></div>
+    <div class="photo p1"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="32" r="14" fill="#fff" opacity="0.9"/><path d="M14 80 Q40 56 66 80" fill="#fff" opacity="0.9"/></svg></div>
+    <div class="photo p2"><svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg"><circle cx="35" cy="28" r="12" fill="#fff" opacity="0.9"/><path d="M12 70 Q35 50 58 70" fill="#fff" opacity="0.9"/></svg></div>
+    <div class="tap">))) tap</div>
+    <div class="pricetag">от 299 ₽</div>
+    <div class="chip"></div>
+  </div>
+  <div class="card c2 light">
+    <div class="glare"></div>
+    <div class="brand">песня</div>
+    <div class="note" style="top:50%;left:30%">♪</div>
+    <div class="note" style="top:30%;right:20%;font-size:48px">♫</div>
+    <div class="pricetag">299 ₽</div>
+    <div class="chip"></div>
+  </div>
+  <div class="card c3 light">
+    <div class="glare"></div>
+    <div class="brand">видео</div>
+    <div class="note" style="top:45%;left:25%;font-size:54px">▶</div>
+    <div class="pricetag">499 ₽</div>
+    <div class="chip"></div>
+  </div>
+</div></body></html>

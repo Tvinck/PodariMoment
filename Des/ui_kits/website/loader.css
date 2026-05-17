@@ -1,0 +1,37 @@
+/* ===== LOADING SCREEN ===== */
+.pm-loader { position: fixed; inset: 0; z-index: 9999; background: #0a0a0f; display: grid; place-items: center; overflow: hidden; transition: opacity .8s var(--pm-ease-out), transform .8s var(--pm-ease-out); }
+.pm-loader-out { opacity: 0; transform: scale(1.05); pointer-events: none; }
+.pm-loader-grid { position: absolute; inset: -50%; background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 60px 60px; animation: pm-grid-drift 18s linear infinite; mask-image: radial-gradient(circle at center, #000 0%, transparent 65%); -webkit-mask-image: radial-gradient(circle at center, #000 0%, transparent 65%); }
+@keyframes pm-grid-drift { to { transform: translate(60px, 60px); } }
+.pm-loader-glow { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
+.pm-loader-glow-1 { width: 600px; height: 600px; background: rgba(255, 107, 53, 0.35); top: 10%; left: 10%; animation: pm-glow-float 8s ease-in-out infinite; }
+.pm-loader-glow-2 { width: 500px; height: 500px; background: rgba(255, 209, 102, 0.28); bottom: 10%; right: 10%; animation: pm-glow-float 10s ease-in-out infinite reverse; }
+@keyframes pm-glow-float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(60px,-40px) scale(1.15); } }
+
+.pm-loader-stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 28px; z-index: 2; }
+.pm-loader-cards { position: relative; width: 360px; height: 280px; perspective: 1200px; }
+.pm-lcard { position: absolute; width: 160px; aspect-ratio: 5/8; border-radius: 18px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.2); font-family: var(--pm-font-bold); font-weight: 700; transition: transform .9s var(--pm-ease-spring), opacity .6s var(--pm-ease-out); }
+.pm-lcard-1 { left: 0; top: 0; background: linear-gradient(135deg, #0e7490, #6366f1 60%, #ec4899); }
+.pm-lcard-2 { left: 100px; top: -10px; background: linear-gradient(135deg, #ff6b35, #ffd166); z-index: 2; }
+.pm-lcard-3 { left: 200px; top: 30px; background: linear-gradient(135deg, #ffd166, #ff6b35 50%, #c026d3); }
+.pm-lcard-brand { font-size: 16px; letter-spacing: -0.03em; color: #1a0d05; }
+.pm-lcard-1 .pm-lcard-brand { color: #fff; }
+.pm-lcard-3 .pm-lcard-brand { color: #fff; }
+.pm-lcard-brand em { font-style: normal; font-weight: 400; opacity: 0.85; display: block; }
+.pm-lcard-chip { width: 28px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.3)); align-self: flex-end; }
+.pm-lcard-note { position: absolute; font-size: 28px; color: rgba(26,13,5,0.6); animation: pm-note-rise 2s ease-in-out infinite; }
+.pm-lcard-n1 { top: 40%; left: 30%; }
+.pm-lcard-n2 { top: 25%; right: 20%; font-size: 20px; animation-delay: 0.6s; }
+@keyframes pm-note-rise { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(-8px); opacity: 1; } }
+.pm-lcard-play { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); font-size: 28px; color: rgba(255,255,255,0.85); }
+
+.pm-spark { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #ffd166; box-shadow: 0 0 12px #ffd166, 0 0 24px #ff6b35; animation: pm-spark-pulse 1.6s ease-in-out infinite; transition: opacity .4s; }
+@keyframes pm-spark-pulse { 0%,100% { transform: scale(0.6); opacity: 0.4; } 50% { transform: scale(1.4); opacity: 1; } }
+
+.pm-loader-text { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pm-loader-wordmark { font-family: var(--pm-font-bold); font-weight: 700; font-size: 36px; letter-spacing: -0.04em; color: #fff; }
+.pm-loader-tag { font-family: var(--pm-font-body); font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pm-fg-3); font-weight: 600; }
+
+.pm-loader-bar { width: 280px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; }
+.pm-loader-bar-fill { height: 100%; background: var(--pm-grad-flame); border-radius: 999px; box-shadow: 0 0 12px rgba(255,107,53,0.6); transition: width .15s linear; }
+.pm-loader-pct { font-family: var(--pm-font-mono); font-size: 12px; letter-spacing: 0.2em; color: var(--pm-fg-3); }

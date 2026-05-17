@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body)}
+  .wrap{padding:24px 32px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+  .col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .box{width:72px;height:48px;background:linear-gradient(180deg,#1a1a26,#14141f);border:1px solid var(--pm-line-2)}
+  .lab{font-family:var(--pm-font-mono);font-size:10px;color:var(--pm-fg-3)}
+  .val{font-size:11px;font-weight:600}
+</style></head>
+<body><div class="wrap">
+  <div class="col"><div class="box" style="border-radius:6px"></div><div class="lab">--pm-r-xs</div><div class="val">6px</div></div>
+  <div class="col"><div class="box" style="border-radius:10px"></div><div class="lab">--pm-r-sm</div><div class="val">10px</div></div>
+  <div class="col"><div class="box" style="border-radius:16px"></div><div class="lab">--pm-r-md</div><div class="val">16px</div></div>
+  <div class="col"><div class="box" style="border-radius:24px"></div><div class="lab">--pm-r-lg</div><div class="val">24px</div></div>
+  <div class="col"><div class="box" style="border-radius:32px"></div><div class="lab">--pm-r-xl</div><div class="val">32px</div></div>
+  <div class="col"><div class="box" style="border-radius:999px"></div><div class="lab">--pm-r-pill</div><div class="val">pill</div></div>
+</div></body></html>

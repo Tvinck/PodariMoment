@@ -8,9 +8,10 @@ const TRACKS = ['Кинематограф', 'Электро-поп', 'Лаунж
 const CELEBS = ['Дед Мороз', 'Нагиев', 'Харламов', 'Другой'];
 
 const TABS = [
-  { id: 'song',  label: 'ИИ-песня',  price: 299 },
-  { id: 'video', label: 'Видео из фото', price: 499 },
-  { id: 'celeb', label: 'От знаменитости', price: 799 },
+  { id: 'song',   label: 'ИИ-песня',         price: 299 },
+  { id: 'video',  label: 'Видео из фото',    price: 499 },
+  { id: 'celeb',  label: 'От знаменитости',  price: 799 },
+  { id: 'gender', label: 'Гендер-пати',      price: 599 },
 ];
 
 const Field = ({ label, error, children }) => (
@@ -37,13 +38,20 @@ const OrderForm = ({ initialProduct, setView }) => {
   const [photos, setPhotos] = useState([]);
 
   const set = (k, v) => setData((d) => ({ ...d, [k]: v }));
-  const price = TABS.find((t) => t.id === tab).price;
+  const basePrice = TABS.find((t) => t.id === tab).price;
+  let price = basePrice;
+  if (tab === 'gender') {
+    if (data.gvoice === 'star') price += 200;
+    if ((data.gdur || '').indexOf('1 минута') !== -1) price += 200;
+  }
 
   const validate = () => {
     const e = {};
-    if (!data.name?.trim()) e.name = 'Укажите имя получателя';
+    if (tab !== 'gender') {
+      if (!data.name?.trim()) e.name = 'Укажите имя получателя';
+      if (!data.occasion) e.occasion = 'Выберите повод';
+    }
     if (!data.email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Похоже, в адресе опечатка';
-    if (!data.occasion) e.occasion = 'Выберите повод';
     if (tab === 'song') {
       if (!data.genre) e.genre = 'Выберите жанр';
       if (!data.facts?.trim() || data.facts.length < 20) e.facts = 'Хотя бы 3 коротких факта';
@@ -55,6 +63,10 @@ const OrderForm = ({ initialProduct, setView }) => {
     }
     if (tab === 'celeb') {
       if (!data.celeb) e.celeb = 'Выберите персонажа';
+    }
+    if (tab === 'gender') {
+      if (!data.gparents?.trim() || data.gparents.length < 2) e.gparents = 'Укажите имена родителей';
+      if (!data.gscript?.trim() || data.gscript.length < 20) e.gscript = 'Опишите сценарий хотя бы парой предложений';
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -81,23 +93,33 @@ const OrderForm = ({ initialProduct, setView }) => {
       </div>
       <div className="pm-tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={`pm-tab ${tab === t.id ? 'act' : ''}`} onClick={() => { setTab(t.id); setErrors({}); }}>
+          <button key={t.id} className={`pm-tab ${tab === t.id ? 'act' : ''}`} onClick={() => {
+            setTab(t.id);
+            setErrors({});
+            if (t.id === 'gender' && window.PM_GENDER_DEFAULTS) {
+              setData((d) => ({ ...window.PM_GENDER_DEFAULTS, ...d }));
+            }
+          }}>
             {t.label} <span className="pm-tab-price">{t.price} ₽</span>
           </button>
         ))}
       </div>
 
       <form className="pm-form" onSubmit={submit}>
-        <Field label="Имя получателя" error={errors.name}>
-          <input className={errors.name ? 'err' : ''} placeholder="Например, Анна" value={data.name || ''} onChange={(e) => set('name', e.target.value)} />
-        </Field>
+        {tab !== 'gender' && (
+          <>
+            <Field label="Имя получателя" error={errors.name}>
+              <input className={errors.name ? 'err' : ''} placeholder="Например, Анна" value={data.name || ''} onChange={(e) => set('name', e.target.value)} />
+            </Field>
 
-        <Field label="Повод" error={errors.occasion}>
-          <select className={errors.occasion ? 'err' : ''} value={data.occasion || ''} onChange={(e) => set('occasion', e.target.value)}>
-            <option value="">Выберите повод</option>
-            {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
-          </select>
-        </Field>
+            <Field label="Повод" error={errors.occasion}>
+              <select className={errors.occasion ? 'err' : ''} value={data.occasion || ''} onChange={(e) => set('occasion', e.target.value)}>
+                <option value="">Выберите повод</option>
+                {OCCASIONS.map((o) => <option key={o}>{o}</option>)}
+              </select>
+            </Field>
+          </>
+        )}
 
         {tab === 'song' && (
           <>
@@ -146,6 +168,8 @@ const OrderForm = ({ initialProduct, setView }) => {
             </Field>
           </>
         )}
+
+        {tab === 'gender' && window.GenderFields && React.createElement(window.GenderFields, { data, set, errors })}
 
         <Field label="Email заказчика" error={errors.email}>
           <input type="email" className={errors.email ? 'err' : ''} placeholder="anna@example.com" value={data.email || ''} onChange={(e) => set('email', e.target.value)} />

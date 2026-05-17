@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<title>Gender Reveal Voice — Components</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+html,body{margin:0;background:var(--pm-bg);color:var(--pm-fg-1);font-family:var(--pm-font-body);-webkit-font-smoothing:antialiased}
+.wrap{padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:1280px;margin:0 auto}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:18px}
+.caps{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--pm-fg-3);font-weight:700}
+h2{font-family:var(--pm-font-display);font-size:22px;font-weight:600;margin:0}
+
+/* --- Product Card --- */
+.card{position:relative;border-radius:24px;padding:26px;min-height:280px;background:linear-gradient(180deg,#1a1a26,#14141f);border:1px solid var(--pm-line-2);color:#fff;overflow:hidden;cursor:pointer;transition:transform .4s var(--pm-ease-spring)}
+.card:hover{transform:translateY(-6px)}
+.card-glow{position:absolute;inset:-30%;border-radius:50%;filter:blur(60px);opacity:0.55;pointer-events:none;background:radial-gradient(circle at 30% 30%,#ff8fb4,transparent 55%),radial-gradient(circle at 70% 70%,#6fb6ff,transparent 55%);animation:morph 14s var(--pm-ease-out) infinite;mix-blend-mode:screen}
+@keyframes morph{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-10px) scale(1.05)}66%{transform:translate(-15px,15px) scale(.98)}}
+.card-badge{position:absolute;top:18px;right:18px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18);font-size:10px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;z-index:2}
+.card-eyebrow{font-size:11px;letter-spacing:0.05em;font-weight:600;opacity:0.55;position:relative;z-index:1}
+.card h3{font-family:var(--pm-font-display);font-size:26px;line-height:1.05;margin:8px 0 0;font-weight:600;position:relative;z-index:1}
+.card p{font-size:13px;line-height:1.45;opacity:0.65;margin:10px 0 0;max-width:90%;position:relative;z-index:1}
+.card-ribbon{position:absolute;bottom:-16px;right:-12px;width:160px;height:160px;filter:drop-shadow(0 12px 30px rgba(0,0,0,0.45));z-index:1}
+.card-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-top:32px}
+.card-price{background:#0a0a0f;color:#fff;padding:8px 14px;border-radius:999px;font-weight:700;font-size:12px}
+.card-go{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:grid;place-items:center;font-size:18px;color:#fff}
+
+/* --- Reveal Stage --- */
+.stage{position:relative;aspect-ratio:16/9;border-radius:18px;background:radial-gradient(ellipse at 50% 70%,#1a1320,#0a0a0f 70%);border:1px solid var(--pm-line-2);overflow:hidden;display:grid;place-items:center;text-align:center;padding:24px}
+.stage::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 30% 30%,rgba(111,182,255,0.22),transparent 55%),radial-gradient(circle at 70% 80%,rgba(255,143,180,0.28),transparent 55%);filter:blur(40px);z-index:0}
+.stage-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.stage-eyebrow{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;opacity:0.5;font-weight:700}
+.stage-headline{font-family:var(--pm-font-display);font-style:italic;font-size:28px;line-height:1.1;opacity:0.95}
+.stage-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;background:linear-gradient(135deg,#cfe6ff,#6fb6ff);color:#06183a;box-shadow:0 8px 24px rgba(111,182,255,0.45);position:relative;overflow:hidden}
+.stage-pill::before{content:"";position:absolute;top:0;bottom:0;left:-30%;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);transform:skewX(-20deg);animation:shine 4.5s ease-in-out infinite}
+@keyframes shine{0%,80%{left:-30%}100%{left:130%}}
+.stage-meta{font-size:11px;opacity:0.55}
+
+/* --- Voice chips --- */
+.vc-row{display:flex;flex-wrap:wrap;gap:8px}
+.vc{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--pm-bg-elev-2);border:1px solid var(--pm-line-2);font-size:13px;font-weight:600;color:var(--pm-fg-2)}
+.vc.sel{background:rgba(255,107,53,0.15);border-color:var(--pm-orange);color:var(--pm-fg-1)}
+.vc.playing .vc-play{background:var(--pm-orange);box-shadow:0 0 0 4px rgba(255,107,53,0.22)}
+.vc-play{width:26px;height:26px;border-radius:50%;background:#0a0a0f;color:#fff;display:grid;place-items:center}
+.vc-play svg{width:11px;height:11px}
+.vc-wave{display:inline-flex;align-items:flex-end;gap:2px;height:14px;width:22px;opacity:0.55}
+.vc-wave i{display:block;width:2px;border-radius:1px;background:currentColor;height:30%}
+.vc-wave i:nth-child(1){height:35%}.vc-wave i:nth-child(2){height:65%}.vc-wave i:nth-child(3){height:90%}.vc-wave i:nth-child(4){height:55%}.vc-wave i:nth-child(5){height:40%}
+.vc.playing .vc-wave{opacity:1}
+.vc.playing .vc-wave i{animation:wv .8s ease-in-out infinite}
+.vc.playing .vc-wave i:nth-child(2){animation-delay:.1s}
+.vc.playing .vc-wave i:nth-child(3){animation-delay:.2s}
+@keyframes wv{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1.4)}}
+.vc-add{font-size:10px;opacity:0.55;margin-left:4px}
+
+/* --- Script templates --- */
+.tmpls{display:flex;flex-wrap:wrap;gap:6px}
+.tmpl{padding:7px 12px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px dashed var(--pm-line-2);font-size:11px;font-weight:600;color:var(--pm-fg-2)}
+
+/* --- Sticky price preview --- */
+.sticky{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(20,20,31,0.92),rgba(28,28,48,0.92));border:1px solid var(--pm-line-2)}
+.sticky b{font-family:var(--pm-font-display);font-size:22px;font-weight:800;background:var(--pm-grad-flame);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+@media (prefers-reduced-motion: reduce){.card-glow,.stage-pill::before,.vc.playing .vc-wave i{animation:none !important}}
+</style></head>
+<body>
+<div class="wrap">
+
+  <div class="col">
+    <div class="caps">01 · Product card</div>
+    <button class="card">
+      <div class="card-glow"></div>
+      <span class="card-badge">Новое · 🎀</span>
+      <div class="card-eyebrow">гендер-пати</div>
+      <h3>Голос для<br>раскрытия пола</h3>
+      <p>ИИ-анонс с премиум-голосом — для видео, колонки или большого экрана на празднике.</p>
+      <svg class="card-ribbon" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="rb-b" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#cfe6ff"/><stop offset="100%" stop-color="#6fb6ff"/></linearGradient>
+          <linearGradient id="rb-p" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe2ec"/><stop offset="100%" stop-color="#ff8fb4"/></linearGradient>
+          <radialGradient id="rb-s" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#fff5d0"/><stop offset="60%" stop-color="#ffd166"/><stop offset="100%" stop-color="#e6a02b" stop-opacity="0"/></radialGradient>
+        </defs>
+        <path d="M22 28 Q40 18 60 36 Q80 54 98 44 Q92 64 72 60 Q52 56 40 72 Q26 60 22 28 Z" fill="url(#rb-b)"/>
+        <path d="M98 28 Q80 18 60 36 Q40 54 22 44 Q28 64 48 60 Q68 56 80 72 Q94 60 98 28 Z" fill="url(#rb-p)" style="mix-blend-mode:screen"/>
+        <circle cx="60" cy="48" r="14" fill="url(#rb-s)"/>
+        <circle cx="60" cy="48" r="3" fill="#fff5d0"/>
+      </svg>
+      <div class="card-foot"><div class="card-price">599 ₽</div><div class="card-go">→</div></div>
+    </button>
+
+    <div class="caps">02 · Reveal stage (boy)</div>
+    <div class="stage">
+      <div class="stage-inner">
+        <div class="stage-eyebrow">Превью · реакция гостей</div>
+        <div class="stage-headline">«У вас будет…»</div>
+        <div class="stage-pill">💙 <span>Мальчик</span></div>
+        <div class="stage-meta">мужской голос · кинематика · 30 секунд</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="caps">03 · Voice preview chips</div>
+    <div class="vc-row">
+      <div class="vc sel"><span class="vc-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>👨 Мужской<span class="vc-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="vc playing"><span class="vc-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></span>👩 Женский<span class="vc-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="vc"><span class="vc-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>🧒 Детский<span class="vc-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="vc"><span class="vc-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>🎤 Звезда<span class="vc-add">+200 ₽</span><span class="vc-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+      <div class="vc"><span class="vc-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>🎙 Шоумен<span class="vc-wave"><i></i><i></i><i></i><i></i><i></i></span></div>
+    </div>
+
+    <div class="caps">04 · Script templates</div>
+    <div class="tmpls">
+      <span class="tmpl">🎬 Кинодрама</span>
+      <span class="tmpl">😂 С приколом</span>
+      <span class="tmpl">🥹 Душевно</span>
+      <span class="tmpl">✨ Загадочно</span>
+    </div>
+
+    <div class="caps">05 · Sticky price (звезда + 1 мин)</div>
+    <div class="sticky">
+      <div>
+        <div class="caps" style="font-size:10px">Итого</div>
+        <div style="display:flex;align-items:baseline;gap:8px"><b>999 ₽</b><span style="font-size:11px;opacity:0.6">+ звезда · 1 мин</span></div>
+      </div>
+      <button class="card" style="all:unset;padding:10px 16px;border-radius:999px;background:var(--pm-grad-flame);color:#1a0d05;font-weight:700;font-size:13px;cursor:pointer">Оформить →</button>
+    </div>
+  </div>
+
+</div>
+</body></html>

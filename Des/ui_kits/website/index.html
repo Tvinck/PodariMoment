@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<base href="/">
 <title>ПодариМомент — подарки нового поколения</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
@@ -300,6 +301,7 @@ img{max-width:100%;display:block}
 .tabs-pill .tp.act.butter{background:var(--butter);color:var(--butter-d)}
 .tabs-pill .tp.act.mint{background:var(--mint);color:var(--mint-d)}
 .tabs-pill .tp.act.coral{background:var(--coral);color:var(--coral-d)}
+.tabs-pill .tp.act.gender{background:linear-gradient(135deg,#6fb6ff,#ff8fb4 55%,#ffd166);color:#0a0a0f}
 .form{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:16px}
 @media (max-width:520px){.form{padding:18px;border-radius:20px}}
 .field{display:flex;flex-direction:column;gap:8px}
@@ -574,7 +576,15 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .di-video{background:radial-gradient(circle at 35% 28%,#ffd0c4,#e85a3a 55%,#6e1b0a 100%);color:#fff}
 .di-star{background:radial-gradient(circle at 35% 28%,#fff5c7,#ffc83a 55%,#a0631a 100%);color:#3d2008}
 .di-photo{background:radial-gradient(circle at 35% 28%,#d8c2ff,#9a6fe2 55%,#3d2680 100%);color:#fff}
-.di-gender{background:radial-gradient(circle at 35% 28%,#ffd8e0,#ff7faa 55%,#9c2a5c 100%);color:#fff}
+.di-gender{background:radial-gradient(circle at 35% 28%,var(--g-hi,#ffe9c2),var(--g-mid,#ff7faa) 55%,var(--g-lo,#5a2a7a) 100%);color:#fff;animation:revealMorph 14s var(--ease) infinite}
+@keyframes revealMorph{
+  0%,100%{--g-hi:#cfe6ff;--g-mid:#6fb6ff;--g-lo:#1e3a7a}
+  33%   {--g-hi:#ffe2ec;--g-mid:#ff8fb4;--g-lo:#7a1a4a}
+  66%   {--g-hi:#fff3c2;--g-mid:#ffd166;--g-lo:#7a4a08}
+}
+@property --g-hi{syntax:'<color>';inherits:false;initial-value:#ffd8e0}
+@property --g-mid{syntax:'<color>';inherits:false;initial-value:#ff7faa}
+@property --g-lo{syntax:'<color>';inherits:false;initial-value:#9c2a5c}
 .di-animate{background:radial-gradient(circle at 35% 28%,#caf0db,#5cc89a 55%,#1a6c4a 100%);color:#0a3d1f}
 .di-catalog{background:radial-gradient(circle at 35% 28%,#cae0ff,#5d8be0 55%,#1a3d80 100%);color:#fff}
 .di-account{background:radial-gradient(circle at 35% 28%,#ffe1c2,#e07b3a 55%,#7a3508 100%);color:#fff}
@@ -633,6 +643,104 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .acc-spark.sp3{top:40%;left:20%;animation-delay:-2s;width:5px;height:5px}
 @keyframes accSpark{0%,100%{opacity:0;transform:scale(0)}50%{opacity:1;transform:scale(1)}}
 
+/* === GENDER PARTY: premium shimmer === */
+:root{
+  --reveal-blue:#6fb6ff; --reveal-blue-soft:rgba(111,182,255,0.18);
+  --reveal-pink:#ff8fb4; --reveal-pink-soft:rgba(255,143,180,0.18);
+  --reveal-neutral:#ffd166; --reveal-neutral-soft:rgba(255,209,102,0.18);
+}
+.pcard.gender{background:linear-gradient(180deg,#1a1a26,#14141f);color:#fff;border:1px solid var(--line)}
+.pcard.gender .pcard-label{opacity:0.55}
+.pcard.gender p{opacity:0.65}
+.pcard.gender .pcard-price{background:#0a0a0f;color:#fff}
+.pcard.gender .pcard-go{background:rgba(255,255,255,0.06);color:#fff}
+.pcard.gender:hover .pcard-go{background:#fff;color:#0a0a0f}
+.pcard-gender-glow{position:absolute;inset:-30%;border-radius:50%;filter:blur(60px);opacity:0.55;pointer-events:none;background:radial-gradient(circle at 30% 30%,var(--rg-a,#ff8fb4),transparent 55%),radial-gradient(circle at 70% 70%,var(--rg-b,#6fb6ff),transparent 55%);animation:revealMorph 14s var(--ease) infinite,gpFloat 18s ease-in-out infinite;mix-blend-mode:screen;z-index:0}
+.pcard.gender:hover .pcard-gender-glow{opacity:0.85;animation-duration:6s,18s}
+@keyframes gpFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-14px)}}
+.pcard.gender > *:not(.pcard-gender-glow){position:relative;z-index:1}
+.pcard-ribbon{position:absolute;bottom:-16px;right:-12px;width:170px;height:170px;opacity:0.9;transition:transform .6s var(--spring);pointer-events:none;z-index:0;filter:drop-shadow(0 12px 30px rgba(0,0,0,0.45))}
+.pcard.gender:hover .pcard-ribbon{transform:rotate(-10deg) scale(1.08)}
+.pcard-confetti{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s var(--ease);z-index:2}
+.pcard.gender:hover .pcard-confetti{opacity:1}
+.pcard-confetti span{position:absolute;width:6px;height:10px;border-radius:2px;animation:confettiUp 1.6s ease-out infinite}
+.pcard-confetti span:nth-child(1){left:18%;background:var(--reveal-blue);animation-delay:0s}
+.pcard-confetti span:nth-child(2){left:32%;background:var(--reveal-pink);animation-delay:.25s;width:5px;height:5px;border-radius:50%}
+.pcard-confetti span:nth-child(3){left:48%;background:var(--reveal-neutral);animation-delay:.5s}
+.pcard-confetti span:nth-child(4){left:64%;background:var(--reveal-pink);animation-delay:.75s;width:5px;height:5px;border-radius:50%}
+.pcard-confetti span:nth-child(5){left:80%;background:var(--reveal-blue);animation-delay:1s}
+@keyframes confettiUp{0%{transform:translateY(110%) rotate(0);opacity:0}15%{opacity:1}100%{transform:translateY(-30%) rotate(360deg);opacity:0}}
+
+/* Reveal Stage (live preview above gender form) */
+.reveal-stage{position:relative;aspect-ratio:16/9;border-radius:20px;background:radial-gradient(ellipse at 50% 70%,#1a1320,#0a0a0f 70%);border:1px solid var(--line);overflow:hidden;margin-bottom:18px;display:grid;place-items:center;text-align:center;padding:24px}
+.reveal-stage::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 30% 30%,var(--reveal-active,var(--reveal-neutral-soft)),transparent 55%),radial-gradient(circle at 70% 80%,var(--reveal-active-2,var(--reveal-pink-soft)),transparent 55%);filter:blur(40px);transition:--reveal-active 1.2s var(--ease),--reveal-active-2 1.2s var(--ease);z-index:0}
+@property --reveal-active{syntax:'<color>';inherits:false;initial-value:rgba(255,209,102,0.18)}
+@property --reveal-active-2{syntax:'<color>';inherits:false;initial-value:rgba(255,143,180,0.18)}
+.reveal-stage[data-reveal="boy"]{--reveal-active:var(--reveal-blue-soft);--reveal-active-2:rgba(111,182,255,0.28)}
+.reveal-stage[data-reveal="girl"]{--reveal-active:var(--reveal-pink-soft);--reveal-active-2:rgba(255,143,180,0.28)}
+.reveal-stage[data-reveal="surprise"]{--reveal-active:var(--reveal-neutral-soft);--reveal-active-2:rgba(255,209,102,0.28)}
+.reveal-stage-inner{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.reveal-eyebrow{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;opacity:0.5;font-weight:700}
+.reveal-headline{font-family:'nauryzRedKeds','Space Grotesk',serif;font-style:italic;font-weight:400;font-size:clamp(22px,3.5vw,32px);line-height:1.1;letter-spacing:-0.02em;color:#fff;opacity:0.95}
+.reveal-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:800;font-size:14px;letter-spacing:-0.01em;background:var(--reveal-pill-bg,linear-gradient(135deg,#ffd166,#ff6b35));color:#0a0a0f;box-shadow:0 8px 24px var(--reveal-pill-shadow,rgba(255,209,102,0.35));transition:all .6s var(--spring);position:relative;overflow:hidden}
+.reveal-stage[data-reveal="boy"] .reveal-pill{--reveal-pill-bg:linear-gradient(135deg,#cfe6ff,#6fb6ff);--reveal-pill-shadow:rgba(111,182,255,0.45)}
+.reveal-stage[data-reveal="girl"] .reveal-pill{--reveal-pill-bg:linear-gradient(135deg,#ffe2ec,#ff8fb4);--reveal-pill-shadow:rgba(255,143,180,0.45)}
+.reveal-stage[data-reveal="surprise"] .reveal-pill{--reveal-pill-bg:linear-gradient(135deg,#fff3c2,#ffd166);--reveal-pill-shadow:rgba(255,209,102,0.45)}
+.reveal-pill::before{content:"";position:absolute;top:0;bottom:0;left:-30%;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);transform:skewX(-20deg);animation:revealShine 4.5s ease-in-out infinite}
+@keyframes revealShine{0%,80%{left:-30%}100%{left:130%}}
+.reveal-meta{font-size:11px;opacity:0.5;letter-spacing:0.04em;font-weight:500}
+
+/* Voice preview chip (audio mini-player) */
+.voice-chips{display:flex;flex-wrap:wrap;gap:8px}
+.voice-chip{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;background:#22222e;color:rgba(255,255,255,0.85);font-size:12px;font-weight:600;cursor:pointer;transition:all .25s var(--ease);border:1px solid transparent;white-space:nowrap}
+.voice-chip:hover{background:#2d2d40;color:#fff;transform:translateY(-1px)}
+.voice-chip.act{background:#fff;color:#0a0a0f;border-color:#fff}
+.voice-chip.act .vc-play{background:#0a0a0f;color:#fff}
+.voice-chip.act .vc-wave i{background:#0a0a0f}
+.vc-play{width:26px;height:26px;border-radius:50%;background:#0a0a0f;color:#fff;display:grid;place-items:center;flex-shrink:0;transition:all .2s var(--ease);box-shadow:inset 0 1px 0 rgba(255,255,255,0.15)}
+.vc-play svg{width:11px;height:11px}
+.voice-chip:hover .vc-play{transform:scale(1.08)}
+.voice-chip.playing .vc-play{background:var(--orange);color:#fff;box-shadow:0 0 0 4px rgba(255,107,53,0.22)}
+.vc-wave{display:inline-flex;align-items:flex-end;gap:2px;height:14px;width:22px;opacity:0.55}
+.vc-wave i{display:block;width:2px;border-radius:1px;background:currentColor;height:30%}
+.vc-wave i:nth-child(1){height:35%}
+.vc-wave i:nth-child(2){height:65%}
+.vc-wave i:nth-child(3){height:90%}
+.vc-wave i:nth-child(4){height:55%}
+.vc-wave i:nth-child(5){height:40%}
+.voice-chip.playing .vc-wave{opacity:1;animation:none}
+.voice-chip.playing .vc-wave i{animation:vcWave 0.8s ease-in-out infinite}
+.voice-chip.playing .vc-wave i:nth-child(2){animation-delay:.1s}
+.voice-chip.playing .vc-wave i:nth-child(3){animation-delay:.2s}
+.voice-chip.playing .vc-wave i:nth-child(4){animation-delay:.15s}
+.voice-chip.playing .vc-wave i:nth-child(5){animation-delay:.05s}
+@keyframes vcWave{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1.4)}}
+.vc-label{display:inline-flex;align-items:center;gap:6px}
+.vc-label small{font-size:10px;opacity:0.55;font-weight:600;letter-spacing:0.02em}
+
+/* Reveal chips with side glow */
+.chips.reveal-chips{gap:8px}
+.chips.reveal-chips .chip{border:1px solid transparent;transition:all .25s var(--ease)}
+.chips.reveal-chips .chip[data-rv="boy"].act{background:var(--reveal-blue);color:#06183a;box-shadow:0 0 0 4px rgba(111,182,255,0.18)}
+.chips.reveal-chips .chip[data-rv="girl"].act{background:var(--reveal-pink);color:#3a061a;box-shadow:0 0 0 4px rgba(255,143,180,0.18)}
+.chips.reveal-chips .chip[data-rv="surprise"].act{background:var(--reveal-neutral);color:#3a2906;box-shadow:0 0 0 4px rgba(255,209,102,0.18)}
+
+/* Script template chips */
+.script-templates{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.script-tmpl{padding:7px 12px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);cursor:pointer;transition:all .2s var(--ease)}
+.script-tmpl:hover{background:rgba(255,255,255,0.08);border-style:solid;border-color:var(--orange);color:#fff}
+
+/* Sticky price summary inside form */
+.price-sticky{position:sticky;bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(20,20,31,0.92),rgba(28,28,48,0.92));border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin-top:16px;box-shadow:0 14px 36px rgba(0,0,0,0.5)}
+.price-sticky-meta{font-size:10px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.55;font-weight:700}
+.price-sticky-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price-sticky-row b{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;transition:opacity .25s var(--ease)}
+.price-sticky-row .ps-add{font-size:11px;opacity:0.6;font-weight:600}
+
+@media (prefers-reduced-motion: reduce){
+  .di-gender,.pcard-gender-glow,.reveal-stage::before,.reveal-pill::before,.pcard-confetti span,.voice-chip.playing .vc-wave i{animation:none !important}
+  .pcard-confetti{display:none}
+}
 </style>
 </head>
 <body>
@@ -749,7 +857,28 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
         <button class="pcard peach" data-prod="logo"><div><div class="pcard-label">для бизнеса</div><h3>Логотип</h3><p>Стиль, палитра, формат — 3 варианта</p></div><div class="pcard-art">◆</div><div class="pcard-foot"><div class="pcard-price">899 ₽</div><div class="pcard-go">→</div></div></button>
         <button class="pcard lilac" data-prod="card"><div><div class="pcard-label">для бизнеса</div><h3>Визитка</h3><p>Цифровая или под печать, с QR</p></div><div class="pcard-art">❑</div><div class="pcard-foot"><div class="pcard-price">499 ₽</div><div class="pcard-go">→</div></div></button>
         <button class="pcard sky" data-prod="market"><div class="badge">B2B</div><div><div class="pcard-label">маркетплейсы</div><h3>Карточка<br>товара</h3><p>WB, Ozon, ЯМ — главная + инфографика</p></div><div class="pcard-art">⊞</div><div class="pcard-foot"><div class="pcard-price">699 ₽</div><div class="pcard-go">→</div></div></button>
-        <button class="pcard coral" data-prod="gender"><div class="badge">🎀 Новое</div><div><div class="pcard-label">гендер-пати</div><h3>Голос<br>анонса</h3><p>ИИ-объявление пола ребёнка — для видео или вечеринки</p></div><div class="pcard-art">🎀</div><div class="pcard-foot"><div class="pcard-price">599 ₽</div><div class="pcard-go">→</div></div></button>
+        <button class="pcard gender" data-prod="gender">
+          <div class="pcard-gender-glow"></div>
+          <div class="pcard-confetti"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="badge" style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18)">Новое · 🎀</div>
+          <div>
+            <div class="pcard-label">гендер-пати</div>
+            <h3>Голос <em style="opacity:.8;font-weight:400">для</em><br>раскрытия пола</h3>
+            <p>ИИ-анонс с премиум-голосом — для видео, колонки или большого экрана на празднике</p>
+          </div>
+          <svg class="pcard-ribbon" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="lg-rb-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#cfe6ff"/><stop offset="100%" stop-color="#6fb6ff"/></linearGradient>
+              <linearGradient id="lg-rb-pink" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffe2ec"/><stop offset="100%" stop-color="#ff8fb4"/></linearGradient>
+              <radialGradient id="rg-rb-spark" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#fff5d0"/><stop offset="60%" stop-color="#ffd166"/><stop offset="100%" stop-color="#e6a02b" stop-opacity="0"/></radialGradient>
+            </defs>
+            <path d="M22 28 Q40 18 60 36 Q80 54 98 44 Q92 64 72 60 Q52 56 40 72 Q26 60 22 28 Z" fill="url(#lg-rb-blue)" opacity="0.92"/>
+            <path d="M98 28 Q80 18 60 36 Q40 54 22 44 Q28 64 48 60 Q68 56 80 72 Q94 60 98 28 Z" fill="url(#lg-rb-pink)" opacity="0.92" style="mix-blend-mode:screen"/>
+            <circle cx="60" cy="48" r="14" fill="url(#rg-rb-spark)"/>
+            <circle cx="60" cy="48" r="3" fill="#fff5d0"/>
+          </svg>
+          <div class="pcard-foot"><div class="pcard-price">599 ₽</div><div class="pcard-go">→</div></div>
+        </button>
       </div>
     </section>
 
@@ -948,7 +1077,7 @@ const PRODUCTS = [
   {id:'star',ic:'★',name:'Голос звезды',color:'sky'},
   {id:'photo',ic:'✦',name:'Фото мечты',color:'butter'},
   {id:'animate',ic:'⟳',name:'Оживить фото',color:'mint'},
-  {id:'gender',ic:'🎀',name:'Голос для гендер-пати',color:'coral'},
+  {id:'gender',ic:'🎀',name:'Голос для гендер-пати',color:'gender'},
   {id:'postcard',ic:'✉',name:'Открытка',color:'coral'},
   {id:'logo',ic:'◆',name:'Логотип',color:'peach'},
   {id:'card',ic:'❑',name:'Визитка',color:'lilac'},
@@ -962,6 +1091,23 @@ function chips(group, items, idx=0){
 function styleGrid(group, items, idx=0){
   return `<div class="style-grid" data-group="${group}">${items.map((it,i)=>`<div class="style-card${i===idx?' act':''}" style="background:${it.bg}"><div class="check">✓</div>${it.label}</div>`).join('')}</div>`;
 }
+function voiceChips(group, items, idx=0){
+  const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  return `<div class="voice-chips" data-group="${group}" role="radiogroup" aria-label="Голос объявляющего">${items.map((it,i)=>`
+    <button type="button" class="voice-chip${i===idx?' act':''}" data-vid="${it.id}" data-freq="${it.freq}" data-wtype="${it.type||'sine'}"${it.add?` data-add="${it.add}"`:''} role="radio" aria-checked="${i===idx?'true':'false'}" aria-label="Голос: ${it.label}${it.add?', '+it.add:''}. Нажмите для прослушивания.">
+      <span class="vc-play" aria-hidden="true">${playIcon}</span>
+      <span class="vc-label">${it.emoji} ${it.label}${it.add?` <small>${it.add}</small>`:''}</span>
+      <span class="vc-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+    </button>`).join('')}</div>`;
+}
+
+const GENDER_SCRIPTS = {
+  cinema: 'Тёмный экран. Гул барабанов нарастает. «Анна и Михаил… после долгих месяцев ожидания… ваш малыш — это…» Пауза три секунды. «Сын!»',
+  fun:    'Привет всем! Кто думал «девочка» — поднимите руки. Кто «мальчик» — вторую руку. А теперь барабанная дробь… и у Анны с Михаилом будет дочка! Никаких споров.',
+  soul:   'Анна, Михаил. Сегодня в вашем доме рождается имя. Сегодня в вашей жизни — новый смысл. И этот смысл зовут… дочка. С любовью — от всех нас.',
+  quiet:  'Загадайте число. Загадали? А теперь представьте: первая улыбка, первое слово, первый шаг. Всё это случится — с вашим сыном.'
+};
+
 function uploader(label, num=1){
   let thumbs = '';
   for(let i=0;i<num;i++) thumbs += '<div class="thumb filled">📷<div class="thumb-x" onclick="removeThumb(event,this)">×</div></div>';
@@ -1246,30 +1392,71 @@ const FORMS = {
     </div>`,
 
   gender: () => `
-    <div class="field" style="margin-bottom:14px"><label>Что обнародуем</label>
-      <div class="chips" data-group="greveal">
-        <div class="chip act">💙 Мальчик</div>
-        <div class="chip">💗 Девочка</div>
-        <div class="chip">❓ Сюрприз — пусть выберет ИИ</div>
+    <div class="reveal-stage" id="reveal-stage" data-reveal="boy" aria-label="Превью анонса">
+      <div class="reveal-stage-inner">
+        <div class="reveal-eyebrow">Превью · реакция гостей</div>
+        <div class="reveal-headline">«У вас будет…»</div>
+        <div class="reveal-pill" id="reveal-pill">💙 <span id="reveal-word">Мальчик</span></div>
+        <div class="reveal-meta" id="reveal-meta">мужской голос · кинематика · 30 секунд</div>
       </div>
     </div>
-    <div class="field" style="margin-bottom:14px"><label>Голос объявляющего</label>
-      ${chips('gvoice',['👨 Мужской','👩 Женский','🧒 Детский','🎤 Звезда (+200 ₽)','🎙 Шоумен'])}
+
+    <div class="field" style="margin-bottom:14px"><label>Что обнародуем</label>
+      <div class="chips reveal-chips" data-group="greveal">
+        <div class="chip act" data-rv="boy">💙 Мальчик</div>
+        <div class="chip" data-rv="girl">💗 Девочка</div>
+        <div class="chip" data-rv="surprise">❓ Сюрприз — пусть выберет ИИ</div>
+      </div>
     </div>
+
+    <div class="field" style="margin-bottom:14px"><label>Голос объявляющего <small style="opacity:.5;font-weight:500;text-transform:none;letter-spacing:0">— нажмите ▶, чтобы послушать</small></label>
+      ${voiceChips('gvoice',[
+        {id:'male',label:'Мужской',emoji:'👨',freq:160,type:'sine'},
+        {id:'female',label:'Женский',emoji:'👩',freq:240,type:'sine'},
+        {id:'child',label:'Детский',emoji:'🧒',freq:340,type:'triangle'},
+        {id:'star',label:'Звезда',emoji:'🎤',freq:200,type:'sawtooth',add:'+200 ₽'},
+        {id:'showman',label:'Шоумен',emoji:'🎙',freq:180,type:'square'}
+      ], 0)}
+    </div>
+
     <div class="field" style="margin-bottom:14px"><label>Стиль анонса</label>
-      ${chips('gvibe',['🥹 Душевно','🎉 Громко-весело','🎬 Кинематика','🤡 С приколом','✨ Загадочно'])}
+      ${chips('gvibe',['🥹 Душевно','🎉 Громко-весело','🎬 Кинематика','🤡 С приколом','✨ Загадочно'], 2)}
     </div>
+
     <div class="field" style="margin-bottom:14px"><label>Формат</label>
-      ${chips('gfmt',['🔊 MP3 (для колонки)','🎬 MP4 — видео с анимацией','📱 Вертикальное (для соцсетей)'])}
+      ${chips('gfmt',['🔊 MP3 (для колонки)','🎬 MP4 — видео с анимацией','📱 Вертикальное (для соцсетей)'], 1)}
     </div>
+
     <div class="field-row">
       <div class="field"><label>Имена родителей</label><input class="input" placeholder="Анна и Михаил" value="Анна и Михаил"></div>
-      <div class="field"><label>Длительность</label><select class="input"><option>15 секунд</option><option>30 секунд</option><option>1 минута (+200 ₽)</option></select></div>
+      <div class="field"><label>Длительность</label>
+        <select class="input" id="gdur">
+          <option>15 секунд</option>
+          <option selected>30 секунд</option>
+          <option>1 минута (+200 ₽)</option>
+        </select>
+      </div>
     </div>
+
     <div class="field" style="margin-top:14px"><label>Сценарий / о чём сказать</label>
-      <textarea class="input" rows="3" placeholder="Например: интрига, обратный отсчёт, объявление пола...">После 5-секундной интриги драматично объявляем: «У вас будет... сын!». Поздравляем родителей.</textarea>
+      <textarea class="input" id="gscript" rows="3" placeholder="Опишите драматургию анонса своими словами…">После 5-секундной интриги драматично объявляем: «У вас будет… сын!». Поздравляем родителей.</textarea>
+      <div class="script-templates" data-group="gtmpl">
+        <button type="button" class="script-tmpl" data-tmpl="cinema">🎬 Кинодрама</button>
+        <button type="button" class="script-tmpl" data-tmpl="fun">😂 С приколом</button>
+        <button type="button" class="script-tmpl" data-tmpl="soul">🥹 Душевно</button>
+        <button type="button" class="script-tmpl" data-tmpl="quiet">✨ Загадочно</button>
+      </div>
     </div>
-    <div class="field" style="margin-top:14px"><label>Фото родителей (необязательно)</label>${uploader('Загрузи фото',0)}</div>`,
+
+    <div class="field" style="margin-top:14px"><label>Фото родителей <small style="opacity:.5;font-weight:500;text-transform:none;letter-spacing:0">— необязательно, поможет ИИ подобрать тон</small></label>${uploader('Загрузи фото',0)}</div>
+
+    <div class="price-sticky" id="gprice" role="status" aria-live="polite">
+      <div>
+        <div class="price-sticky-meta">Итого</div>
+        <div class="price-sticky-row"><b id="gprice-sum">599 ₽</b><span class="ps-add" id="gprice-add">базовый пакет</span></div>
+      </div>
+      <button type="button" class="cta" data-go="success" style="padding:10px 16px">Оформить →</button>
+    </div>`,
 
   market: () => `
     <div class="field" style="margin-bottom:14px"><label>Маркетплейс</label>
@@ -1655,18 +1842,49 @@ window.sendAdmMsg = sendAdmMsg; window.sendCliMsg = sendCliMsg;
 
 // ROUTING
 const VIEWS = ['landing','order','success','admin','catalog','account'];
-function go(v){
+function viewToPath(v, prod){
+  if(v==='landing') return '/';
+  if(v==='order' && prod) return '/order/'+prod;
+  return '/'+v;
+}
+function pathToRoute(path){
+  const p = (path || '/').replace(/\/+$/,'') || '/';
+  if(p==='/' || p==='') return {view:'landing'};
+  const parts = p.split('/').filter(Boolean);
+  const v = parts[0];
+  if(!VIEWS.includes(v)) return {view:'landing'};
+  const out = {view:v};
+  if(v==='order' && parts[1]) out.prod = parts[1];
+  return out;
+}
+function go(v, opts){
+  opts = opts || {};
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
   if(v==='admin' && typeof renderAdmin==='function') renderAdmin();
   if(v==='account' && typeof renderAccount==='function') renderAccount();
   if(v==='success') burstConfetti();
-  // update dock active state
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
-  // close mobile menu
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');
   const bg=document.getElementById('burger');if(bg)bg.classList.remove('open');
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(!opts.skipScroll) window.scrollTo({top:0,behavior:'smooth'});
+  if(!opts.skipHistory){
+    const path = viewToPath(v, opts.prod);
+    if(location.pathname !== path) history.pushState({view:v, prod:opts.prod}, '', path);
+    document.title = ({
+      landing:'ПодариМомент — подарки нового поколения',
+      order:'Оформление заказа · ПодариМомент',
+      success:'Готово! · ПодариМомент',
+      admin:'Админ-панель · ПодариМомент',
+      catalog:'Каталог · ПодариМомент',
+      account:'Личный кабинет · ПодариМомент'
+    })[v] || 'ПодариМомент';
+  }
 }
+window.addEventListener('popstate', e=>{
+  const r = (e.state && e.state.view) ? e.state : pathToRoute(location.pathname);
+  go(r.view, {skipHistory:true, skipScroll:true, prod:r.prod});
+  if(r.view==='order' && r.prod && typeof setProduct==='function') setTimeout(()=>setProduct(r.prod), 20);
+});
 function burstConfetti(){
   const host=document.getElementById('confetti-burst');if(!host)return;
   host.innerHTML='';
@@ -1690,7 +1908,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 window.go = go;
 function scrollTo2(id){go('landing');setTimeout(()=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);}
-function goOrder(p){go('order');setTimeout(()=>setProduct(p),20);}
+function goOrder(p){go('order',{prod:p});setTimeout(()=>setProduct(p),20);}
 window.goOrder = goOrder;
 
 // PRODUCT TABS
@@ -1701,13 +1919,116 @@ function buildProdTabs(){
 function setProduct(prod){
   if(!window.FORMS) return;
   document.querySelectorAll('.tabs-pill .tp').forEach(t=>{
-    t.classList.remove('act','peach','lilac','sky','butter','mint','coral');
+    t.classList.remove('act','peach','lilac','sky','butter','mint','coral','gender');
     if(t.dataset.prod===prod){t.classList.add('act');const p=PRODUCTS.find(x=>x.id===prod);if(p)t.classList.add(p.color);}
   });
   document.getElementById('prod-fields').innerHTML = FORMS[prod] ? FORMS[prod]() : '';
   document.getElementById('op').textContent = PRICES[prod];
+  if(prod==='gender') initGenderForm();
 }
 window.setProduct = setProduct;
+
+/* === GENDER PARTY: form interactions === */
+let gVoiceAudio = null;
+let gVoiceTimer = null;
+function stopVoicePreview(){
+  document.querySelectorAll('.voice-chip.playing').forEach(c=>c.classList.remove('playing'));
+  if(gVoiceTimer){clearTimeout(gVoiceTimer);gVoiceTimer=null;}
+  if(gVoiceAudio){try{gVoiceAudio.osc.stop();gVoiceAudio.ctx.close();}catch(_){};gVoiceAudio=null;}
+}
+function playVoicePreview(chip){
+  const wasPlaying = chip.classList.contains('playing');
+  stopVoicePreview();
+  if(wasPlaying) return; // toggle off
+  chip.classList.add('playing');
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+    osc.type = chip.dataset.wtype || 'sine';
+    osc.frequency.value = +chip.dataset.freq || 220;
+    lfo.frequency.value = 5; lfoG.gain.value = 8;
+    lfo.connect(lfoG); lfoG.connect(osc.frequency);
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.08);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 2.6);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(); lfo.start();
+    gVoiceAudio = {osc, ctx};
+    gVoiceTimer = setTimeout(stopVoicePreview, 2700);
+  }catch(_){ /* WebAudio not available — visual feedback only */
+    gVoiceTimer = setTimeout(()=>chip.classList.remove('playing'), 2500);
+  }
+}
+
+function syncRevealStage(){
+  const stage = document.getElementById('reveal-stage'); if(!stage) return;
+  const rev = document.querySelector('.chips[data-group="greveal"] .chip.act');
+  const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
+  const vibe = document.querySelector('.chips[data-group="gvibe"] .chip.act');
+  const dur = document.getElementById('gdur');
+  const word = document.getElementById('reveal-word');
+  const pill = document.getElementById('reveal-pill');
+  const meta = document.getElementById('reveal-meta');
+  const map = {boy:{w:'Мальчик',e:'💙'}, girl:{w:'Девочка',e:'💗'}, surprise:{w:'…сюрприз',e:'❓'}};
+  const rv = (rev && rev.dataset.rv) || 'boy';
+  stage.dataset.reveal = rv;
+  if(word) word.textContent = map[rv].w;
+  if(pill) pill.firstChild.textContent = map[rv].e + ' ';
+  if(meta){
+    const v = voice ? voice.querySelector('.vc-label').textContent.replace(/\+200.*/,'').trim() : '—';
+    const vb = vibe ? vibe.textContent.replace(/^[^\s]+\s/,'').trim().toLowerCase() : '—';
+    const d = dur ? dur.value : '30 секунд';
+    meta.textContent = `${v.toLowerCase()} голос · ${vb} · ${d}`;
+  }
+}
+
+function recalcGenderPrice(){
+  const sum = document.getElementById('gprice-sum');
+  const addEl = document.getElementById('gprice-add');
+  if(!sum) return;
+  let total = 599;
+  const adds = [];
+  const star = document.querySelector('.voice-chip[data-vid="star"].act');
+  if(star){ total += 200; adds.push('звезда'); }
+  const dur = document.getElementById('gdur');
+  if(dur && dur.value && dur.value.indexOf('1 минута') !== -1){ total += 200; adds.push('1 мин'); }
+  sum.textContent = total + ' ₽';
+  addEl.textContent = adds.length ? '+ ' + adds.join(' · ') : 'базовый пакет';
+}
+
+function initGenderForm(){
+  syncRevealStage();
+  recalcGenderPrice();
+}
+
+document.addEventListener('click', e=>{
+  const vc = e.target.closest('.voice-chip');
+  if(vc){
+    e.preventDefault();
+    const grp = vc.parentElement;
+    if(e.target.closest('.vc-play')){
+      playVoicePreview(vc);
+      return;
+    }
+    grp.querySelectorAll('.voice-chip').forEach(c=>{c.classList.remove('act');c.setAttribute('aria-checked','false');});
+    vc.classList.add('act'); vc.setAttribute('aria-checked','true');
+    recalcGenderPrice(); syncRevealStage();
+    return;
+  }
+  const tmpl = e.target.closest('.script-tmpl');
+  if(tmpl){
+    e.preventDefault();
+    const ta = document.getElementById('gscript');
+    if(ta && GENDER_SCRIPTS[tmpl.dataset.tmpl]){ ta.value = GENDER_SCRIPTS[tmpl.dataset.tmpl]; ta.focus(); }
+    return;
+  }
+  const revChip = e.target.closest('.chips.reveal-chips .chip, .chips[data-group="gvibe"] .chip, .chips[data-group="gfmt"] .chip');
+  if(revChip){ setTimeout(syncRevealStage, 0); }
+}, true);
+
+document.addEventListener('change', e=>{
+  if(e.target && e.target.id === 'gdur'){ recalcGenderPrice(); syncRevealStage(); }
+});
 
 // === DOCK BUILD ===
 const DOCK_SVG = {
@@ -1716,7 +2037,7 @@ const DOCK_SVG = {
   video: '<svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="14" height="13" rx="2.5" fill="currentColor"/><path d="M16.5 10l5-3v10l-5-3v-4z" fill="currentColor"/></svg>',
   star: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5l2.9 6.3 6.9.7-5.2 4.7 1.5 6.8L12 17.6 5.9 21l1.5-6.8L2.2 9.5l6.9-.7L12 2.5z" fill="currentColor"/></svg>',
   photo: '<svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="14" rx="2.5" fill="currentColor"/><path d="M8 5.5l1.5-2h5L16 5.5" stroke="currentColor" stroke-width="2" fill="currentColor"/><circle cx="12" cy="13" r="3.5" fill="#0a0a0f" opacity="0.45"/><circle cx="12" cy="13" r="2" fill="currentColor"/></svg>',
-  gender: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2a5 5 0 0 1 5 5c0 2.4-1.7 4.4-4 4.9V14h2v2h-2v3h-2v-3H9v-2h2v-2.1c-2.3-.5-4-2.5-4-4.9a5 5 0 0 1 5-5z" fill="currentColor"/></svg>',
+  gender: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 7 Q9 4 12 8 Q15 12 20 8 Q19 14 14 13 Q10 13 8 16 Q5 13 4 7 Z" fill="currentColor" opacity="0.85"/><path d="M20 7 Q15 4 12 8 Q9 12 4 8 Q5 14 10 13 Q14 13 16 16 Q19 13 20 7 Z" fill="currentColor" opacity="0.55"/><circle cx="12" cy="10.5" r="2" fill="#fff5d0"/></svg>',
   animate: '<svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-3-6.7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M21 4v5h-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>',
   catalog: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5" fill="currentColor"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" fill="currentColor"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" fill="currentColor"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" fill="currentColor"/></svg>',
   account: '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M3.5 21c1-4.5 4.5-7 8.5-7s7.5 2.5 8.5 7" fill="currentColor"/></svg>',
@@ -1872,13 +2193,17 @@ document.getElementById('fab').addEventListener('click',()=>{
 // ORDER FORM submit
 document.getElementById('order-form').addEventListener('submit',e=>{e.preventDefault();go('success');});
 
-// INIT
+// INIT — read URL and route
 buildProdTabs();
-setProduct('song');
 buildDock();
 buildCatTabs();
 renderCat('all');
-go('landing');
+(function bootRoute(){
+  const r = pathToRoute(location.pathname);
+  setProduct(r.prod && PRICES[r.prod] ? r.prod : 'song');
+  go(r.view, {skipScroll:true, prod:r.prod});
+  history.replaceState({view:r.view, prod:r.prod}, '', viewToPath(r.view, r.prod));
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+{
+  "name": "podarimoment",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-generated celebration gifts — songs, photo videos, celebrity voices, gender-reveal announcements.",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "python3 Des/ui_kits/website/serve.py 8080",
+    "preview": "node build.js && npx --yes serve -s dist -l 8080"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

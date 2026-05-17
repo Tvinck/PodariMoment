@@ -30,6 +30,17 @@ const PRODUCTS = [
     badge: 'Премиум',
     icon: 'M12 2 L13.5 10.5 L22 12 L13.5 13.5 L12 22 L10.5 13.5 L2 12 L10.5 10.5 Z',
   },
+  {
+    id: 'gender',
+    label: 'Гендер-пати',
+    title: 'Голос',
+    italic: 'для раскрытия пола',
+    desc: 'ИИ-анонс «мальчик / девочка» с премиум-голосом — для видео, колонки или большого экрана.',
+    price: 599,
+    badge: 'Новое',
+    accent: 'reveal',
+    icon: 'M4 7 Q9 4 12 8 Q15 12 20 8 Q19 14 14 13 Q10 13 8 16 Q5 13 4 7 Z M20 7 Q15 4 12 8 Q9 12 4 8 Q5 14 10 13 Q14 13 16 16 Q19 13 20 7 Z',
+  },
 ];
 
 const ProductCards = ({ setView, setProduct }) => {
@@ -43,7 +54,7 @@ const ProductCards = ({ setView, setProduct }) => {
         {PRODUCTS.map((p) => (
           <article
             key={p.id}
-            className="pm-product-card"
+            className={`pm-product-card${p.accent ? ' pm-product-card--' + p.accent : ''}`}
             onClick={() => { setProduct(p.id); setView('order'); }}
           >
             <div className="pm-product-glow" />

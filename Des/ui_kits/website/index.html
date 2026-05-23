@@ -842,6 +842,16 @@ body.legal-open{overflow:hidden}
 .ord-row-name{font-size:15px;font-weight:700;letter-spacing:-0.01em}
 .ord-row-date{font-size:12px;opacity:0.55}
 .ord-row-side{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+
+/* === АДМИНКА === */
+.admin-gate{max-width:380px;margin:60px auto;display:flex;flex-direction:column;gap:12px;padding:32px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.admin-gate-title{font-size:24px;font-weight:800;letter-spacing:-0.03em;margin:0}
+.admin-filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.afilter{padding:9px 16px;border-radius:999px;background:#22222e;color:rgba(255,255,255,0.7);font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:all .2s var(--ease)}
+.afilter:hover{background:#2d2d40;color:#fff}
+.afilter.act{background:#fff;color:#0a0a0f;border-color:#fff}
+.admin-status-sel{font:inherit;font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#22222e;color:#fff;cursor:pointer}
+.admin-status-sel.s-ok{color:#4ade80}.admin-status-sel.s-wip{color:var(--gold)}.admin-status-sel.s-new{color:#c4b5fd}.admin-status-sel.s-err{color:#ff5470}
 </style>
 </head>
 <body>
@@ -1666,20 +1676,8 @@ window.PRICES = PRICES; window.PRODUCTS = PRODUCTS; window.FORMS = FORMS;
 /* === admin.js (inlined) === */
 /* ==== ADMIN, ACCOUNT, CHAT DATA + RENDERERS ==== */
 
-const ORDERS = [
-  {id:'#0263',user:'Анна Петрова',email:'anna@mail.ru',prod:'song',sum:299,status:'ok',date:'сегодня 14:32'},
-  {id:'#0262',user:'Михаил К.',email:'m.k@gmail.com',prod:'video',sum:499,status:'wip',date:'сегодня 13:18'},
-  {id:'#0261',user:'Игорь Д.',email:'igor@mail.ru',prod:'photo',sum:399,status:'new',date:'сегодня 12:45'},
-  {id:'#0260',user:'Елена Ш.',email:'elena@ya.ru',prod:'star',sum:799,status:'ok',date:'сегодня 11:22'},
-  {id:'#0259',user:'Ольга В.',email:'olga@gmail.com',prod:'video',sum:499,status:'ok',date:'сегодня 10:08'},
-  {id:'#0258',user:'Тимур А.',email:'tim@mail.ru',prod:'animate',sum:599,status:'ok',date:'вчера 22:15'},
-  {id:'#0257',user:'Светлана М.',email:'svet@mail.ru',prod:'logo',sum:899,status:'wip',date:'вчера 18:42'},
-  {id:'#0256',user:'Денис Р.',email:'denis@gmail.com',prod:'card',sum:499,status:'ok',date:'вчера 16:30'},
-  {id:'#0255',user:'Наталья К.',email:'n.k@ya.ru',prod:'market',sum:699,status:'new',date:'вчера 15:05'},
-  {id:'#0254',user:'Александр Б.',email:'sasha@mail.ru',prod:'postcard',sum:199,status:'ok',date:'вчера 12:48'},
-  {id:'#0253',user:'Кристина П.',email:'k.p@gmail.com',prod:'song',sum:299,status:'ok',date:'вчера 11:32'},
-  {id:'#0252',user:'Виктор Н.',email:'viktor@mail.ru',prod:'photo',sum:399,status:'ok',date:'вчера 10:15'}
-];
+// ORDERS больше не хардкодятся — заказы грузятся из Supabase через
+// /api/admin-orders (см. renderAdmin ниже). Массив удалён намеренно.
 
 const USERS = [
   {name:'Анна Петрова',email:'anna@mail.ru',orders:5,total:1495,joined:'12.10.24',ava:'#ff6b6b'},
@@ -1731,7 +1729,7 @@ const PROMPTS = [
   {prod:'video',name:'Кинематика',text:'cinematic transitions, color grading orange-teal, 24fps, slow zoom, parallax'}
 ];
 
-window.ORDERS = ORDERS; window.USERS = USERS; window.CHATS = CHATS; window.TICKETS = TICKETS; window.PROMPTS = PROMPTS;
+window.USERS = USERS; window.CHATS = CHATS; window.TICKETS = TICKETS; window.PROMPTS = PROMPTS;
 
 const PRODNAME = {song:'Песня',video:'Видео',star:'Звезда',photo:'Фото',animate:'Оживить',postcard:'Открытка',logo:'Логотип',card:'Визитка',market:'Маркет'};
 const STATUSLABEL = {ok:'готово',wip:'в работе',new:'новый',open:'открыт',closed:'закрыт'};
@@ -1888,67 +1886,174 @@ function sendCliMsg(){
   },1200);
 }
 
-/* ==== ADMIN ==== */
+/* ==== ADMIN (реальные данные Supabase + серверная авторизация) ==== */
 let adminTab = 'orders';
 let adminOrderQuery = '';
+let adminFilter = 'all';
+let adminOrders = [];
+const ADMIN_PRICE = 599;
+const ADMIN_STATUS = {
+  pending:   {label:'Ожидает оплаты', cls:'s-wip'},
+  paid:      {label:'Оплачен',        cls:'s-new'},
+  processing:{label:'В работе',       cls:'s-wip'},
+  done:      {label:'Готов',          cls:'s-ok'},
+  refunded:  {label:'Возврат',        cls:'s-closed'},
+  failed:    {label:'Ошибка',         cls:'s-err'}
+};
+const ADMIN_STATUS_ORDER = ['pending','paid','processing','done','refunded','failed'];
+const GENDER_LABEL = {boy:'💙 Мальчик', girl:'💗 Девочка', surprise:'❓ Сюрприз'};
+const VOICE_LABEL = {male:'Мужской', female:'Женский', child:'Детский'};
+function adminPwd(){ try{ return sessionStorage.getItem('pm_admin_pwd')||''; }catch(_){ return ''; } }
+
 function renderAdmin(){
   const view = document.getElementById('view-admin');
-  view.innerHTML = `
-    <section class="admin">
-      <div class="admin-head">
-        <div><div class="kicker">Админ-панель</div><h2 style="font-size:clamp(28px,5vw,36px);font-weight:800;letter-spacing:-0.04em;margin:4px 0 0">Управление</h2></div>
-        <div class="admin-stats">
-          <div class="astat"><div class="astat-num">${ORDERS.length}</div><div class="astat-lab">заказов</div></div>
-          <div class="astat"><div class="astat-num" style="color:#4ade80">${ORDERS.filter(o=>o.status==='ok').length}</div><div class="astat-lab">готово</div></div>
-          <div class="astat"><div class="astat-num" style="color:var(--gold)">${ORDERS.filter(o=>o.status==='wip').length}</div><div class="astat-lab">работа</div></div>
-          <div class="astat"><div class="astat-num" style="color:#c4b5fd">${CHATS.reduce((s,c)=>s+c.unread,0)}</div><div class="astat-lab">чатов</div></div>
-          <div class="astat"><div class="astat-num">${ORDERS.reduce((s,o)=>s+o.sum,0).toLocaleString('ru')} ₽</div><div class="astat-lab">оборот</div></div>
+  if(!adminPwd()){
+    view.innerHTML = `
+      <section class="admin">
+        <div class="admin-gate">
+          <div class="kicker">Админ-панель</div>
+          <h2 class="admin-gate-title">Вход</h2>
+          <input class="input" id="admin-pwd-input" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')adminLogin()">
+          <button class="cta" type="button" onclick="adminLogin()">Войти →</button>
+          <div class="field-error-msg" id="admin-pwd-error" style="display:none">Неверный пароль</div>
         </div>
-      </div>
-      <div class="acc-tabs">
-        <button class="acc-tab ${adminTab==='orders'?'act':''}" onclick="setAdminTab('orders')">📦 Заказы</button>
-        <button class="acc-tab ${adminTab==='users'?'act':''}" onclick="setAdminTab('users')">👤 Пользователи</button>
-        <button class="acc-tab ${adminTab==='chats'?'act':''}" onclick="setAdminTab('chats')">💬 Чаты <span class="badge-num">${CHATS.reduce((s,c)=>s+c.unread,0)}</span></button>
-        <button class="acc-tab ${adminTab==='tickets'?'act':''}" onclick="setAdminTab('tickets')">🎫 Обращения</button>
-        <button class="acc-tab ${adminTab==='prices'?'act':''}" onclick="setAdminTab('prices')">💰 Цены</button>
-        <button class="acc-tab ${adminTab==='prompts'?'act':''}" onclick="setAdminTab('prompts')">🪄 Промпты</button>
-      </div>
-      <div id="admin-pane">${renderAdminPane()}</div>
-    </section>`;
+      </section>`;
+    setTimeout(()=>{const i=document.getElementById('admin-pwd-input');if(i)i.focus();},50);
+    return;
+  }
+  view.innerHTML = `<section class="admin"><div id="admin-shell"><div class="acc-loading">Загружаем заказы…</div></div></section>`;
+  adminFetchOrders();
 }
-function setAdminTab(t){adminTab=t;renderAdmin();}
-function renderAdminPane(){
-  if(adminTab==='orders') return renderAdminOrders();
-  if(adminTab==='users') return renderAdminUsers();
-  if(adminTab==='chats') return renderAdminChats();
-  if(adminTab==='tickets') return renderAdminTickets();
-  if(adminTab==='prices') return renderAdminPrices();
-  if(adminTab==='prompts') return renderAdminPrompts();
+async function adminLogin(){
+  const inp = document.getElementById('admin-pwd-input');
+  const err = document.getElementById('admin-pwd-error');
+  const pwd = inp ? inp.value : '';
+  if(!pwd){ if(inp) inp.classList.add('input-error'); return; }
+  if(err) err.style.display='none';
+  try{
+    const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+    const data = await res.json();
+    if(res.status===401){ if(err){err.textContent='Неверный пароль';err.style.display='block';} if(inp) inp.classList.add('input-error'); return; }
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    try{ sessionStorage.setItem('pm_admin_pwd', pwd); }catch(_){}
+    adminOrders = data.orders||[];
+    renderAdminPanel();
+  }catch(e){ if(err){err.textContent='Сервис недоступен: '+e.message;err.style.display='block';} }
 }
-function renderAdminOrders(){
-  const q = adminOrderQuery.toLowerCase();
-  const list = ORDERS.filter(o => !q || o.id.toLowerCase().includes(q) || o.user.toLowerCase().includes(q) || o.email.toLowerCase().includes(q) || PRODNAME[o.prod].toLowerCase().includes(q));
-  return `
-    <div class="search-bar">
-      <span style="opacity:0.4">🔍</span>
-      <input class="input" placeholder="Поиск по №, имени, email, продукту..." value="${adminOrderQuery}" oninput="adminOrderQuery=this.value;document.getElementById('orders-table').innerHTML=renderOrdersTable()">
-      <button class="btn-ghost" style="padding:10px 16px;font-size:12px">Фильтры</button>
-      <button class="btn-ghost" style="padding:10px 16px;font-size:12px">Экспорт CSV</button>
+function adminLogout(){ try{ sessionStorage.removeItem('pm_admin_pwd'); }catch(_){} renderAdmin(); }
+async function adminFetchOrders(){
+  try{
+    const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})});
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    adminOrders = data.orders||[];
+    renderAdminPanel();
+  }catch(e){
+    const shell = document.getElementById('admin-shell');
+    if(shell) shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить: ${e.message}</div>`;
+  }
+}
+function adminStats(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = o => { const d=new Date(o.created_at); return !isNaN(d) && d>=today; };
+  const paidish = o => ['paid','processing','done'].includes(o.payment_status);
+  const todayOrders = adminOrders.filter(isToday);
+  const revenue = todayOrders.filter(paidish).length * ADMIN_PRICE;
+  const awaiting = adminOrders.filter(o => o.payment_status==='paid' && !o.file_url).length;
+  return {todayCount: todayOrders.length, revenue, awaiting};
+}
+function renderAdminPanel(){
+  const shell = document.getElementById('admin-shell');
+  if(!shell) return;
+  const s = adminStats();
+  shell.innerHTML = `
+    <div class="admin-head">
+      <div><div class="kicker">Админ-панель</div><h2 style="font-size:clamp(28px,5vw,36px);font-weight:800;letter-spacing:-0.04em;margin:4px 0 0">Заказы</h2></div>
+      <div class="admin-stats">
+        <div class="astat"><div class="astat-num">${s.todayCount}</div><div class="astat-lab">сегодня</div></div>
+        <div class="astat"><div class="astat-num" style="color:#4ade80">${s.revenue.toLocaleString('ru')} ₽</div><div class="astat-lab">выручка сегодня</div></div>
+        <div class="astat"><div class="astat-num" style="color:var(--gold)">${s.awaiting}</div><div class="astat-lab">ждут обработки</div></div>
+        <div class="astat"><div class="astat-num">${adminOrders.length}</div><div class="astat-lab">всего</div></div>
+        <button class="btn-ghost" style="padding:8px 14px;font-size:12px;align-self:center" onclick="adminLogout()">Выйти</button>
+      </div>
     </div>
-    <div id="orders-table">${renderOrdersTable()}</div>`;
+    <div class="admin-filters">
+      ${[['all','Все'],['pending','Ожидают'],['paid','Оплачены'],['done','Готовы'],['refunded','Возвраты']].map(([k,l])=>
+        `<button class="afilter${adminFilter===k?' act':''}" onclick="adminSetFilter('${k}')">${l}</button>`).join('')}
+    </div>
+    <div id="admin-orders-table">${renderAdminOrdersTable()}</div>`;
 }
-function renderOrdersTable(){
-  const q = adminOrderQuery.toLowerCase();
-  const list = ORDERS.filter(o => !q || o.id.toLowerCase().includes(q) || o.user.toLowerCase().includes(q) || o.email.toLowerCase().includes(q) || PRODNAME[o.prod].toLowerCase().includes(q));
-  if(list.length===0) return '<div style="padding:40px;text-align:center;opacity:0.5;font-size:14px">Ничего не найдено</div>';
-  return `<div class="atable-wrap"><table class="atable"><thead><tr><th>№</th><th>Получатель</th><th>Продукт</th><th>Email</th><th>Дата</th><th>Сумма</th><th>Статус</th><th></th></tr></thead><tbody>
+function adminSetFilter(f){ adminFilter=f; renderAdminPanel(); }
+function renderAdminOrdersTable(){
+  let list = adminOrders;
+  if(adminFilter==='pending') list = list.filter(o=>o.payment_status==='pending');
+  else if(adminFilter==='paid') list = list.filter(o=>['paid','processing'].includes(o.payment_status));
+  else if(adminFilter==='done') list = list.filter(o=>o.payment_status==='done');
+  else if(adminFilter==='refunded') list = list.filter(o=>['refunded','failed'].includes(o.payment_status));
+  if(list.length===0) return '<div style="padding:40px;text-align:center;opacity:0.5;font-size:14px">Заказов нет</div>';
+  return `<div class="atable-wrap"><table class="atable"><thead><tr>
+    <th>№</th><th>Продукт</th><th>Email</th><th>Пол</th><th>Голос</th><th>Дата праздника</th><th>Сумма</th><th>Статус</th><th>Создан</th><th></th>
+  </tr></thead><tbody>
     ${list.map(o=>`<tr>
-      <td><b>${o.id}</b></td><td>${o.user}</td><td>${PRODNAME[o.prod]}</td><td style="opacity:0.6">${o.email}</td><td style="opacity:0.6">${o.date}</td><td><b>${o.sum} ₽</b></td>
-      <td><span class="status s-${o.status}">${STATUSLABEL[o.status]}</span></td>
-      <td><button class="btn-mini">⋯</button></td>
+      <td><b>${String(o.id).slice(0,8)}</b></td>
+      <td>Гендер-пати</td>
+      <td style="opacity:0.7">${o.email||''}</td>
+      <td>${GENDER_LABEL[o.baby_gender]||o.baby_gender||''}</td>
+      <td>${VOICE_LABEL[o.voice_type]||o.voice_type||''}</td>
+      <td style="opacity:0.7">${o.party_date||'—'}</td>
+      <td><b>${ADMIN_PRICE} ₽</b></td>
+      <td>
+        <select class="admin-status-sel ${ (ADMIN_STATUS[o.payment_status]||{}).cls||'' }" onchange="adminSetStatus('${o.id}', this.value)">
+          ${ADMIN_STATUS_ORDER.map(st=>`<option value="${st}" ${o.payment_status===st?'selected':''}>${ADMIN_STATUS[st].label}</option>`).join('')}
+        </select>
+      </td>
+      <td style="opacity:0.6;white-space:nowrap">${fmtDateTime(o.created_at)}</td>
+      <td><button class="btn-mini ${o.file_url?'btn-mini-orange':''}" onclick="adminOpenFileModal('${o.id}')">📎 Файл</button></td>
     </tr>`).join('')}
   </tbody></table></div>`;
 }
+async function adminPatch(id, patch){
+  const res = await fetch('/api/admin-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), id, ...patch})});
+  if(res.status===401){ adminLogout(); throw new Error('Сессия истекла'); }
+  const data = await res.json();
+  if(!res.ok) throw new Error(data.error||'Ошибка');
+  return data.order;
+}
+async function adminSetStatus(id, status){
+  try{
+    const upd = await adminPatch(id, {status});
+    const i = adminOrders.findIndex(o=>o.id===id); if(i>=0 && upd) adminOrders[i]=upd;
+    renderAdminPanel();
+  }catch(e){ alert('Не удалось сменить статус: '+e.message); }
+}
+function adminOpenFileModal(id){
+  const o = adminOrders.find(x=>x.id===id);
+  const m = document.getElementById('legal-modal');
+  document.getElementById('legal-modal-title').textContent = 'Прикрепить файл к заказу';
+  document.getElementById('legal-modal-body').innerHTML = `
+    <p>Заказ <b>${String(id).slice(0,8)}</b> · ${o&&o.email||''}</p>
+    <div class="field" style="margin-top:14px"><label>Ссылка на MP3 (Google Drive / Yandex Disk / любой URL)</label>
+      <input class="input" id="admin-file-url" placeholder="https://..." value="${o&&o.file_url?o.file_url:''}">
+    </div>
+    <div class="field-error-msg" id="admin-file-error" style="display:none"></div>
+    <button class="cta" type="button" style="margin-top:16px" onclick="adminSaveFile('${id}')">Сохранить и пометить «Готов» →</button>`;
+  m.style.display='flex'; document.body.classList.add('legal-open');
+  setTimeout(()=>{const i=document.getElementById('admin-file-url');if(i)i.focus();},50);
+}
+async function adminSaveFile(id){
+  const inp = document.getElementById('admin-file-url');
+  const err = document.getElementById('admin-file-error');
+  const url = (inp&&inp.value||'').trim();
+  if(!url.match(/^https?:\/\/.+/)){ if(err){err.textContent='Введите корректный URL (http/https)';err.style.display='block';} return; }
+  try{
+    const upd = await adminPatch(id, {file_url:url, status:'done'});
+    const i = adminOrders.findIndex(o=>o.id===id); if(i>=0 && upd) adminOrders[i]=upd;
+    closeLegalModal(); renderAdminPanel();
+  }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
+}
+window.adminLogin=adminLogin; window.adminLogout=adminLogout; window.adminSetFilter=adminSetFilter;
+window.adminSetStatus=adminSetStatus; window.adminOpenFileModal=adminOpenFileModal; window.adminSaveFile=adminSaveFile;
 function renderAdminUsers(){
   return `<div class="search-bar"><span style="opacity:0.4">🔍</span><input class="input" placeholder="Поиск пользователя..."><button class="btn-ghost" style="padding:10px 16px;font-size:12px">+ Добавить</button></div>
   <div class="atable-wrap"><table class="atable"><thead><tr><th>Пользователь</th><th>Email</th><th>Заказов</th><th>Сумма</th><th>С нами с</th><th></th></tr></thead><tbody>
@@ -2027,7 +2132,7 @@ function renderAdminPrompts(){
 }
 
 window.renderAdmin = renderAdmin; window.renderAccount = renderAccount;
-window.accTab = accTab; window.setAdminTab = setAdminTab; window.openAdminChat = openAdminChat;
+window.accTab = accTab; window.openAdminChat = openAdminChat;
 window.sendAdmMsg = sendAdmMsg; window.sendCliMsg = sendCliMsg;
 
 </script>

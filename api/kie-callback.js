@@ -2,6 +2,7 @@
 // Формат коллбэка Kie.ai Jobs API разбирается универсально (parseKieResult).
 const { getAdminClient } = require('./_lib/supabase');
 const { parseKieResult, storeAudioToOrder } = require('./_generateVoice');
+const { rateLimit } = require('./_rateLimit');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -15,6 +16,14 @@ async function readBody(req) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
+  if (!rateLimit(req, { key: 'kie-callback', limit: 50 })) { res.status(429).send('Too Many Requests'); return; }
+
+  // Верификация секрета вебхука
+  const url = new URL(req.url, 'http://localhost');
+  const secret = url.searchParams.get('secret');
+  if (process.env.KIE_WEBHOOK_SECRET && secret !== process.env.KIE_WEBHOOK_SECRET) {
+    res.status(401).json({ error: 'Unauthorized' }); return;
+  }
 
   let body;
   try { body = await readBody(req); } catch { res.status(400).send('bad request'); return; }

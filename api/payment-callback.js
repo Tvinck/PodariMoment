@@ -4,6 +4,7 @@
 const { verifyToken } = require('./_lib/tbank');
 const { getAdminClient } = require('./_lib/supabase');
 const { generateVoice } = require('./_generateVoice');
+const { rateLimit } = require('./_rateLimit');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -28,6 +29,7 @@ const STATUS_MAP = {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).send('Method not allowed'); return; }
+  if (!rateLimit(req, { key: 'payment-callback', limit: 100 })) { res.status(429).send('Too Many Requests'); return; }
 
   const password = process.env.TBANK_PASSWORD;
   if (!password) { res.status(500).send('not configured'); return; }
@@ -35,17 +37,29 @@ module.exports = async (req, res) => {
   let body;
   try { body = await readBody(req); } catch { res.status(400).send('bad request'); return; }
 
-  if (!verifyToken(body, password)) { res.status(403).send('invalid token'); return; }
+  // Верификация подписи Т-Банк
+  if (!verifyToken(body, password)) {
+    console.warn('[payment-callback] invalid token', { OrderId: body.OrderId, Status: body.Status });
+    res.status(400).send('invalid token'); return;
+  }
 
   const orderId = body.OrderId;
   const mapped = STATUS_MAP[body.Status];
   if (orderId && mapped) {
     try {
       const sb = getAdminClient();
-      // 1. Фиксируем оплату: pending → paid
+
+      // Идемпотентность: если заказ уже оплачен — не обрабатываем повторно
+      const { data: existing } = await sb.from('orders').select('payment_status,file_url').eq('id', orderId).single();
+      if (existing && ['paid', 'processing', 'done'].includes(existing.payment_status) && mapped === 'paid') {
+        res.status(200).send('OK'); return;
+      }
+
+      // 1. Фиксируем оплату: pending → paid (+ paid_at)
       const { data: order } = await sb.from('orders').update({
         payment_status: mapped,
         payment_id: body.PaymentId ? String(body.PaymentId) : undefined,
+        paid_at: mapped === 'paid' ? new Date().toISOString() : undefined,
       }).eq('id', orderId).select().single();
 
       // 2. Если оплачено и файл ещё не сгенерирован — запускаем авто-генерацию

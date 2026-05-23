@@ -29,7 +29,7 @@ npm run preview
 | `/order/song` · `/order/video` · `/order/star` · `/order/animate` · `/order/photo` · `/order/postcard` · `/order/logo` · `/order/card` · `/order/market` | Формы продуктов |
 | `/catalog` | Каталог работ |
 | `/account` | Личный кабинет |
-| `/admin` | Админка (пароль `admin` в демо) |
+| `/admin` | Админка (пароль из env `ADMIN_PASSWORD`, проверка на сервере) |
 | `/des-preview/components-gender.html` | Дизайн-референс |
 
 ---
@@ -80,10 +80,14 @@ Preview-деплой создаётся автоматически на кажд
 
 ## Безопасность
 
-- **Никаких секретов в репо.** Все ключи — через Vercel Environment Variables или локальный `.env.local` (gitignored).
+- **Никаких секретов в репо.** Все ключи — через Vercel Environment Variables или локальный `.env.local` (gitignored). В браузер (`window.__ENV__`) попадают только публичные `SUPABASE_URL` и `ANON_KEY`.
+- **Service-role и `ADMIN_PASSWORD` — только на сервере.** Кабинет и админка работают через serverless-функции; ключи и пароль не покидают бэкенд. Пароль админки проверяется `timingSafeEqual` в `api/_lib/admin.js`.
+- **Оплата.** `payment-callback` проверяет SHA-256 подпись Т-Банк (`verifyToken`); при несовпадении — `400` + лог. Идемпотентность: повторное уведомление по уже оплаченному заказу не запускает генерацию заново.
+- **Webhook Kie.ai** защищён секретом: `callBackUrl?secret=KIE_WEBHOOK_SECRET`, проверяется в `api/kie-callback`.
+- **Rate limiting** (`api/_rateLimit.js`, in-memory per IP): payment-callback 100/мин, kie-callback 50/мин, my-orders 30/мин, admin-orders 10/мин → `429` при превышении.
 - `vercel.json` выставляет `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, отключает FLoC/Topics.
 - Статика кешируется на 1 год (`immutable`), HTML — без кеша (Vercel default).
-- Админка пока за фронт-паролем (`admin`) — **не для прода**. Перед публичным запуском заменить на NextAuth/JWT с `ADMIN_PASSWORD_HASH` из `.env`.
+- RLS на таблице `orders` включён; anon-доступа нет, запись — только service-role.
 
 ---
 

@@ -2,6 +2,7 @@
 // Пароль проверяется на сервере, service-role не покидает бэкенд.
 const { getAdminClient } = require('./_lib/supabase');
 const { checkAdmin } = require('./_lib/admin');
+const { rateLimit } = require('./_rateLimit');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -15,6 +16,7 @@ async function readBody(req) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
+  if (!rateLimit(req, { key: 'admin-orders', limit: 10 })) { res.status(429).json({ error: 'Слишком много запросов' }); return; }
   let body;
   try { body = await readBody(req); } catch { res.status(400).json({ error: 'bad request' }); return; }
   if (!checkAdmin(body.password)) { res.status(401).json({ error: 'Неверный пароль' }); return; }

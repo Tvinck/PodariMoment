@@ -94,22 +94,40 @@ Preview-деплой создаётся автоматически на кажд
 ## Бэкенд: оплата и заказы
 
 ### Serverless-функции (`/api/`)
-- `POST /api/payment-init` — создаёт заказ в Supabase (`pending`), инициализирует
-  оплату через Т-Банк (Tinkoff `Init`), возвращает `{ paymentUrl }`.
-- `POST /api/payment-callback` — уведомление Т-Банк: проверяет SHA-256 токен,
-  обновляет `payment_status` (`paid`/`failed`), отвечает `OK`.
+- `payment-init` — создаёт заказ (`pending`), сумма по тарифу (399/599/999 ₽),
+  Т-Банк `Init`, возвращает `{ paymentUrl }`.
+- `payment-callback` — проверяет подпись Т-Банк, идемпотентно ставит `paid`
+  (+`paid_at`), шлёт письмо 1, запускает генерацию голоса.
+- `_generateVoice` (хелпер) — текст по сценарию + Kie.ai Jobs API
+  (`/api/v1/jobs/createTask`, модель по тарифу, строковые голоса).
+- `kie-callback` — вебхук Kie.ai (секрет в query): качает MP3 → Supabase
+  Storage → `done`+`done_at`, письма 2/3.
+- `my-orders` — заказы по email (для кабинета). `track-order` — публичный
+  трекинг по `PM-XXXXXXXX` (без ПД).
+- `admin-orders` / `admin-update` / `admin-generate` / `admin-check-status` —
+  админка (пароль на сервере).
+- `cron-check-orders` — Vercel Cron */15: догон зависших `processing`.
+
+### Поток заказа
+`pending` → (оплата) `paid` → (Kie.ai) `processing` → `done` (или
+`generation_failed`). Тарифы: Базовый 399 / Премиум 599 / VIP 999 ₽.
 
 ### Supabase
 1. Создать проект на supabase.com.
-2. Применить миграцию `supabase/migrations/0001_create_orders.sql`
-   (SQL Editor или `supabase db push`).
+2. Применить миграции `0001`…`0004` (SQL Editor или `supabase db push`).
+   `0003` создаёт bucket `order-files`, `0004` — `tariff/paid_at/done_at`.
 3. Скопировать URL, anon key и service_role key в env.
 
 ### Т-Банк (Tinkoff) эквайринг
 1. Подключить Т-Кассу: https://www.tinkoff.ru/kassa/
-2. Взять Terminal Key и Password → `TBANK_TERMINAL_KEY`, `TBANK_PASSWORD`.
-3. В ЛК указать NotificationURL `https://<домен>/api/payment-callback`.
-4. Цена фиксирована: 599 ₽ (59900 копеек) в `api/payment-init.js`.
+2. `TBANK_TERMINAL_KEY`, `TBANK_PASSWORD`.
+3. NotificationURL `https://<домен>/api/payment-callback`.
+4. Сумма по тарифу задаётся в `api/payment-init.js` (`TARIFF_KOPECKS`).
+
+### Kie.ai + Email + Cron
+- `KIE_API_KEY`, `KIE_WEBHOOK_SECRET` (для `?secret=` в callBackUrl).
+- `RESEND_API_KEY`, `FROM_EMAIL` — письма (принят / готов / ошибка).
+- `CRON_SECRET` (опц.) — защита cron-эндпоинта.
 
 Обязательные env для оплаты: `TBANK_TERMINAL_KEY`, `TBANK_PASSWORD`,
 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`.

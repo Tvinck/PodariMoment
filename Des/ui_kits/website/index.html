@@ -908,6 +908,12 @@ body.legal-open{overflow:hidden}
 .track-failed{text-align:center;margin-top:20px;padding:20px;border-radius:16px;background:rgba(255,84,112,0.08);border:1px solid rgba(255,84,112,0.25)}
 .track-failed p{margin:0 0 12px;opacity:0.8}
 .track-wrap .acc-download{margin-top:20px}
+
+/* бейджи тарифа в кабинете */
+.tariff-badge-sm{display:inline-block;padding:2px 8px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.tb-basic{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)}
+.tb-premium{background:linear-gradient(135deg,#ff6b35,#ffd166);color:#1a0d05}
+.tb-vip{background:#ffd166;color:#1a0d05}
 </style>
 </head>
 <body>
@@ -1892,8 +1898,8 @@ function accEmailForm(prefill){
 function accEmpty(email){
   return accShell(`
     <div class="reviews-empty">
-      <div class="reviews-empty-icon">🔍</div>
-      <p class="reviews-empty-text">На <b>${email}</b> заказов пока нет.</p>
+      <div class="reviews-empty-icon">🎀</div>
+      <p class="reviews-empty-text">Здесь появятся ваши заказы.<br><span style="opacity:0.6;font-size:13px">На ${email} пока пусто.</span></p>
       <button class="cta" data-prod="gender">Заказать голос →</button>
       <button class="btn-ghost" type="button" onclick="accForget()" style="margin-top:4px">Искать по другому email</button>
     </div>`);
@@ -1905,15 +1911,18 @@ function accOrdersHtml(orders, email){
         const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-new', icon:'•'};
         const isProc = o.payment_status==='processing' || o.payment_status==='paid';
         const isDone = o.payment_status==='done' && o.file_url;
+        const TB = {basic:{l:'Базовый',c:'tb-basic'}, premium:{l:'Премиум',c:'tb-premium'}, vip:{l:'VIP',c:'tb-vip'}};
+        const tb = TB[o.tariff] || TB.premium;
         return `<div class="ord-card-v2">
           <div class="ord-card-top">
             <div>
-              <div class="ord-row-id">№ ${String(o.id).slice(0,8)}</div>
+              <div class="ord-row-id">№ ${String(o.id).slice(0,8)} <span class="tariff-badge-sm ${tb.c}">${tb.l}</span></div>
               <div class="ord-row-name">Голос для гендер-пати</div>
               <div class="ord-row-date">${fmtDateTime(o.created_at)}</div>
             </div>
             <span class="status ${st.cls}">${st.icon} ${st.label}</span>
           </div>
+          <div><button class="btn-mini" type="button" onclick="goTrack('${o.id}')">📋 Отследить заказ</button></div>
           ${isDone ? `
             <a class="acc-download" href="${o.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать голос</a>
             <div class="acc-download-meta">Формат MP3 · Для личного использования</div>

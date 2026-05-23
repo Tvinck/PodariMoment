@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     const sb = getAdminClient();
     const { data, error } = await sb
       .from('orders')
-      .select('id,created_at,product,baby_gender,voice_type,party_date,email,payment_status,file_url')
+      .select('id,created_at,product,tariff,baby_gender,voice_type,party_date,email,payment_status,file_url')
       .eq('email', email)
       .order('created_at', { ascending: false })
       .limit(50);

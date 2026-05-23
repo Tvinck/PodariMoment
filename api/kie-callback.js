@@ -1,8 +1,7 @@
-// POST /api/kie-callback — Kie.ai сообщает, что файл готов (или ошибка).
-// { task_id, status: 'completed'|'failed', output: { audio_url } }
+// POST /api/kie-callback — Kie.ai сообщает, что задача готова (или ошибка).
+// Формат коллбэка Kie.ai Jobs API разбирается универсально (parseKieResult).
 const { getAdminClient } = require('./_lib/supabase');
-
-const BUCKET = 'order-files';
+const { parseKieResult, storeAudioToOrder } = require('./_generateVoice');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -20,13 +19,11 @@ module.exports = async (req, res) => {
   let body;
   try { body = await readBody(req); } catch { res.status(400).send('bad request'); return; }
 
-  const taskId = body.task_id || (body.data && body.data.task_id);
-  const status = body.status || (body.data && body.data.status);
-  const audioUrl = (body.output && body.output.audio_url)
-    || (body.data && body.data.output && body.data.output.audio_url);
+  const d = (body && body.data) || body || {};
+  const taskId = d.taskId || d.task_id || d.recordId || body.taskId || body.task_id;
+  if (!taskId) { res.status(200).send('OK'); return; }
 
-  if (!taskId) { res.status(200).send('OK'); return; } // нечего сопоставлять
-
+  const { status, audioUrl } = parseKieResult(body);
   const sb = getAdminClient();
 
   try {
@@ -34,23 +31,7 @@ module.exports = async (req, res) => {
     if (!order) { res.status(200).send('OK'); return; }
 
     if (status === 'completed' && audioUrl) {
-      // 1. Скачиваем MP3
-      const fileResp = await fetch(audioUrl);
-      if (!fileResp.ok) throw new Error(`Не удалось скачать аудио: ${fileResp.status}`);
-      const buf = Buffer.from(await fileResp.arrayBuffer());
-
-      // 2. Кладём в Supabase Storage
-      const path = `orders/${order.id}/voice.mp3`;
-      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, buf, {
-        contentType: 'audio/mpeg', upsert: true,
-      });
-      if (upErr) throw upErr;
-
-      // 3. Публичный URL + статус done
-      const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
-      await sb.from('orders').update({
-        file_url: pub.publicUrl, payment_status: 'done', error_log: null,
-      }).eq('id', order.id);
+      await storeAudioToOrder(order, audioUrl); // file_url + done + done_at
     } else if (status === 'failed') {
       await sb.from('orders').update({
         payment_status: 'generation_failed',

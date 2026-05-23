@@ -1,25 +1,30 @@
 // Shared-хелпер (имя с _ → Vercel НЕ создаёт публичный роут).
-// Формирует текст сценария и запускает TTS-генерацию через Kie.ai (ElevenLabs).
+// Формирует текст сценария и запускает TTS через Kie.ai Jobs API (ElevenLabs).
 const { getAdminClient } = require('./_lib/supabase');
 
-const KIE_TTS_URL = 'https://api.kie.ai/v1/elevenlabs/tts';
+const KIE_CREATE_URL = 'https://api.kie.ai/api/v1/jobs/createTask';
+const KIE_DETAIL_URL = 'https://api.kie.ai/api/v1/jobs/getTaskDetail';
 
-// voice_type → ElevenLabs voice_id
-const VOICE_IDS = {
-  male: 'pNInz6obpgDQGcFmaJgB',   // Adam
-  female: 'EXAVITQu4vr4xnSDxMaL', // Bella
-  child: 'jBpfuIE2acCO8z3wKNLl',  // Gigi
+// voice_type → имя голоса ElevenLabs (строка, не ID)
+const VOICE_NAMES = {
+  male: 'Adam',     // мужской
+  female: 'Rachel', // женский
+  child: 'Gigi',    // детский
+  solemn: 'Antoni', // торжественный мужской
+  soft: 'Domi',     // мягкий женский
 };
 
-// baby_gender → существительное для текста
+// tariff → модель Kie.ai
+const TARIFF_MODEL = {
+  basic: 'elevenlabs/text-to-speech-multilingual-v2',
+  premium: 'elevenlabs/text-to-speech-multilingual-v2',
+  vip: 'elevenlabs/text-to-dialogue-v3',
+};
+
 const GENDER_NOUN = { boy: 'сыночек', girl: 'доченька', surprise: 'малыш' };
 
-// Метки сценария (рус.) → ключ шаблона
 const SCENARIO_KEY = {
-  'торжественный': 'formal',
-  'с юмором': 'funny',
-  'душевный': 'warm',
-  'загадочный': 'mysterious',
+  'торжественный': 'formal', 'с юмором': 'funny', 'душевный': 'warm', 'загадочный': 'mysterious',
   formal: 'formal', funny: 'funny', warm: 'warm', mysterious: 'mysterious',
 };
 
@@ -42,7 +47,6 @@ function fmtDate(d) {
   return `${p(dt.getDate())}.${p(dt.getMonth() + 1)}.${dt.getFullYear()}`;
 }
 
-// scenario в БД может быть «Торжественный — <свой текст>». Разбираем.
 function parseScenario(scenario) {
   const parts = String(scenario || '').split(' — ');
   const label = (parts[0] || '').trim().toLowerCase();
@@ -56,7 +60,6 @@ function buildText(order) {
   const date = fmtDate(order.party_date);
   const { key, custom } = parseScenario(order.scenario);
   if (custom) {
-    // Свой текст пользователя — подставляем плейсхолдеры, если есть
     return custom
       .replace(/\{?parent_names\}?/gi, names)
       .replace(/\{?baby_gender\}?/gi, noun)
@@ -65,34 +68,68 @@ function buildText(order) {
   return (TEMPLATES[key] || TEMPLATES.formal)({ names, noun, date });
 }
 
+// Универсальный разбор ответа Kie.ai (createTask / getTaskDetail / webhook).
+// Возвращает { status: 'completed'|'failed'|'processing', audioUrl }
+function parseKieResult(payload) {
+  const d = (payload && (payload.data || payload)) || {};
+  const rawState = d.state || d.status || payload.status || '';
+  const state = String(rawState).toLowerCase();
+  let status = 'processing';
+  if (['success', 'succeeded', 'completed', 'done'].includes(state)) status = 'completed';
+  else if (['fail', 'failed', 'error'].includes(state)) status = 'failed';
+
+  let audioUrl = (d.output && (d.output.audio_url || d.output.audioUrl))
+    || d.audio_url || d.audioUrl || null;
+  // Kie часто кладёт результат строкой JSON в resultJson
+  if (!audioUrl && d.resultJson) {
+    try {
+      const rj = typeof d.resultJson === 'string' ? JSON.parse(d.resultJson) : d.resultJson;
+      audioUrl = (rj.resultUrls && rj.resultUrls[0]) || rj.audio_url || rj.audioUrl
+        || (rj.output && (rj.output.audio_url || rj.output.audioUrl)) || null;
+    } catch { /* ignore */ }
+  }
+  if (!audioUrl && Array.isArray(d.resultUrls)) audioUrl = d.resultUrls[0];
+  return { status, audioUrl };
+}
+
 // Запускает генерацию. Обновляет заказ: kie_task_id + статус processing.
-// Бросает ошибку — вызывающий код пометит generation_failed.
 async function generateVoice(order) {
   const apiKey = process.env.KIE_API_KEY;
   if (!apiKey) throw new Error('KIE_API_KEY not configured');
 
   const text = buildText(order);
-  const voiceId = VOICE_IDS[order.voice_type] || VOICE_IDS.female;
+  const voice = VOICE_NAMES[order.voice_type] || VOICE_NAMES.female;
+  const model = TARIFF_MODEL[order.tariff] || TARIFF_MODEL.premium;
   const base = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
+  const secret = process.env.KIE_WEBHOOK_SECRET || '';
+  const callBackUrl = base
+    ? `${base}/api/kie-callback${secret ? `?secret=${encodeURIComponent(secret)}` : ''}`
+    : undefined;
 
-  const resp = await fetch(KIE_TTS_URL, {
+  const resp = await fetch(KIE_CREATE_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      text,
-      voice_id: voiceId,
-      model_id: 'eleven_multilingual_v2',
-      language_code: 'ru',
-      voice_settings: { stability: 0.7, similarity_boost: 0.8, style: 0.5 },
-      webhook_url: base ? `${base}/api/kie-callback` : undefined,
+      model,
+      callBackUrl,
+      input: {
+        text,
+        voice,
+        stability: 0.6,
+        similarity_boost: 0.8,
+        style: 0.4,
+        speed: 0.9,
+        language_code: 'ru',
+      },
     }),
   });
 
   const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(data.message || data.error || `Kie.ai ответил ${resp.status}`);
-
-  const taskId = data.task_id || (data.data && data.data.task_id) || data.id;
-  if (!taskId) throw new Error('Kie.ai не вернул task_id');
+  if (!resp.ok || (data.code && data.code !== 200)) {
+    throw new Error(data.msg || data.message || `Kie.ai ответил ${resp.status}`);
+  }
+  const taskId = (data.data && (data.data.taskId || data.data.recordId)) || data.taskId;
+  if (!taskId) throw new Error('Kie.ai не вернул taskId');
 
   const sb = getAdminClient();
   await sb.from('orders')
@@ -102,8 +139,18 @@ async function generateVoice(order) {
   return { task_id: String(taskId), text };
 }
 
-// Скачивает MP3 по URL, кладёт в Supabase Storage, проставляет file_url + done.
-// Используется и в kie-callback, и в admin-check-status.
+// Опрос статуса задачи в Kie.ai
+async function fetchTaskDetail(taskId) {
+  const apiKey = process.env.KIE_API_KEY;
+  if (!apiKey) throw new Error('KIE_API_KEY not configured');
+  const r = await fetch(`${KIE_DETAIL_URL}?taskId=${encodeURIComponent(taskId)}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  const data = await r.json().catch(() => ({}));
+  return parseKieResult(data);
+}
+
+// Скачивает MP3 по URL, кладёт в Supabase Storage, проставляет file_url + done + done_at.
 async function storeAudioToOrder(order, audioUrl) {
   const sb = getAdminClient();
   const fileResp = await fetch(audioUrl);
@@ -115,8 +162,10 @@ async function storeAudioToOrder(order, audioUrl) {
   });
   if (upErr) throw upErr;
   const { data: pub } = sb.storage.from('order-files').getPublicUrl(path);
-  await sb.from('orders').update({ file_url: pub.publicUrl, payment_status: 'done', error_log: null }).eq('id', order.id);
+  await sb.from('orders')
+    .update({ file_url: pub.publicUrl, payment_status: 'done', done_at: new Date().toISOString(), error_log: null })
+    .eq('id', order.id);
   return pub.publicUrl;
 }
 
-module.exports = { generateVoice, buildText, VOICE_IDS, storeAudioToOrder };
+module.exports = { generateVoice, buildText, fetchTaskDetail, parseKieResult, storeAudioToOrder, VOICE_NAMES };

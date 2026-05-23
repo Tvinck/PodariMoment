@@ -783,6 +783,29 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .form-step-title{font-size:14px;font-weight:700;letter-spacing:-0.01em}
 .form-step-hint{font-size:11px;opacity:0.5;font-weight:500;margin-left:auto;letter-spacing:0.02em}
 .field-help{font-size:11px;opacity:0.5;line-height:1.4;margin-top:4px;padding-left:4px}
+
+/* required-field error highlight */
+.input.input-error,.chips.chips-error,.demo-player.input-error{border-color:var(--orange) !important;box-shadow:0 0 0 3px rgba(255,107,53,0.18)}
+.chips.chips-error{border:1px solid var(--orange);border-radius:14px;padding:8px}
+.field-error-msg{font-size:11px;color:var(--orange);margin-top:4px;padding-left:4px;font-weight:600}
+
+/* Demo audio player */
+.demo-player{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,rgba(28,28,48,0.9),rgba(20,20,31,0.9));border:1px solid var(--line);margin-bottom:18px}
+.demo-play{width:46px;height:46px;border-radius:50%;flex-shrink:0;background:var(--grad);color:#1a0d05;display:grid;place-items:center;cursor:pointer;border:none;box-shadow:0 6px 18px rgba(255,107,53,0.35);transition:transform .2s var(--spring)}
+.demo-play:hover{transform:scale(1.06)}
+.demo-play svg{width:18px;height:18px}
+.demo-body{flex:1;min-width:0}
+.demo-title{font-size:12px;font-weight:700;letter-spacing:-0.01em;margin-bottom:6px;opacity:0.85}
+.demo-wave{display:flex;align-items:center;gap:2px;height:24px}
+.demo-wave i{flex:1;min-width:2px;border-radius:2px;background:rgba(255,255,255,0.18);height:30%;transition:height .15s var(--ease),background .15s}
+.demo-player.playing .demo-wave i{background:var(--orange)}
+.demo-player.playing .demo-wave i{animation:demoWave 0.9s ease-in-out infinite}
+.demo-wave i:nth-child(3n){animation-delay:.1s}
+.demo-wave i:nth-child(3n+1){animation-delay:.25s}
+.demo-wave i:nth-child(2n){animation-delay:.4s}
+@keyframes demoWave{0%,100%{height:25%}50%{height:90%}}
+.demo-time{font-size:12px;font-weight:600;opacity:0.55;font-variant-numeric:tabular-nums;flex-shrink:0}
+@media (prefers-reduced-motion: reduce){.demo-player.playing .demo-wave i{animation:none}}
 </style>
 </head>
 <body>
@@ -1459,73 +1482,68 @@ const FORMS = {
         <div class="reveal-eyebrow">Так это будет звучать на празднике</div>
         <div class="reveal-headline">«У вас будет…»</div>
         <div class="reveal-pill" id="reveal-pill">💙 <span id="reveal-word">Мальчик</span></div>
-        <div class="reveal-meta" id="reveal-meta">мужской голос · кинематика · 30 секунд</div>
+        <div class="reveal-meta" id="reveal-meta">мужской голос · торжественный · 30 секунд</div>
       </div>
+    </div>
+
+    <div class="demo-player" id="demo-player">
+      <button type="button" class="demo-play" id="demo-play" aria-label="Послушать демо-голос">
+        <svg class="demo-ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="demo-ic-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <div class="demo-body">
+        <div class="demo-title">Послушайте пример анонса</div>
+        <div class="demo-wave" id="demo-wave">${Array.from({length:32}).map(()=>'<i></i>').join('')}</div>
+      </div>
+      <div class="demo-time" id="demo-time">0:00</div>
+      <audio id="demo-audio" preload="none" src="/demo/gender-voice-demo.mp3"></audio>
     </div>
 
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">1</div>
-        <div class="form-step-title">Что обнародуем</div>
+        <div class="form-step-title">Пол малыша</div>
         <div class="form-step-hint">обязательно</div>
       </div>
       <div class="chips reveal-chips" data-group="greveal">
         <div class="chip act" data-rv="boy">💙 Мальчик</div>
         <div class="chip" data-rv="girl">💗 Девочка</div>
-        <div class="chip" data-rv="surprise">❓ Сюрприз — пусть выберет ИИ</div>
+        <div class="chip" data-rv="surprise">❓ Сюрприз</div>
       </div>
-      <div class="field-help">«Сюрприз» — ИИ сам бросит монетку и не покажет вам результат до раскрытия. Можно использовать как настоящий gender-reveal даже от себя.</div>
+      <div class="field-help">«Сюрприз» — ИИ сам бросит монетку и не покажет вам результат до раскрытия. Настоящий gender-reveal даже от себя.</div>
     </div>
 
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">2</div>
-        <div class="form-step-title">Голос объявляющего</div>
+        <div class="form-step-title">Голос</div>
         <div class="form-step-hint">нажмите ▶ — послушаете</div>
       </div>
       ${voiceChips('gvoice',[
         {id:'male',label:'Мужской',emoji:'👨',freq:160,type:'sine'},
         {id:'female',label:'Женский',emoji:'👩',freq:240,type:'sine'},
-        {id:'child',label:'Детский',emoji:'🧒',freq:340,type:'triangle'},
-        {id:'star',label:'Звезда',emoji:'🎤',freq:200,type:'sawtooth',add:'+200 ₽'},
-        {id:'showman',label:'Шоумен',emoji:'🎙',freq:180,type:'square'}
+        {id:'child',label:'Детский',emoji:'🧒',freq:340,type:'triangle'}
       ], 0)}
-      <div class="field-help">«Звезда» — узнаваемый голос знаменитости (Нагиев, Харламов и др.). Превью отражает тембр, финальный голос будет более чистым.</div>
+      <div class="field-help">Превью отражает тембр голоса. Финальный файл будет студийного качества.</div>
     </div>
 
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">3</div>
-        <div class="form-step-title">Стиль и формат</div>
-        <div class="form-step-hint">как звучим и куда отдаём</div>
+        <div class="form-step-title">Сценарий</div>
+        <div class="form-step-hint">обязательно</div>
       </div>
-      <div class="field" style="margin-bottom:14px"><label>Стиль анонса</label>
-        ${chips('gvibe',['🥹 Душевно','🎉 Громко-весело','🎬 Кинематика','🤡 С приколом','✨ Загадочно'], 2)}
+      <div class="field"><label>Тон сценария</label>
+        <select class="input" id="gscenario">
+          <option value="Торжественный">Торжественный</option>
+          <option value="С юмором">С юмором</option>
+          <option value="Душевный">Душевный</option>
+          <option value="Загадочный">Загадочный</option>
+        </select>
       </div>
-      <div class="field"><label>Формат файла</label>
-        ${chips('gfmt',['🔊 MP3 — для колонки','🎬 MP4 — видео 16:9','📱 Вертикальное 9:16'], 1)}
-        <div class="field-help">MP3 включают через bluetooth на празднике. MP4 — для большого экрана. Вертикальное — чтобы выложить в сторис сразу после реакции гостей.</div>
-      </div>
-    </div>
-
-    <div class="form-step">
-      <div class="form-step-head">
-        <div class="form-step-num">4</div>
-        <div class="form-step-title">Сценарий и детали</div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Имена родителей</label><input class="input" placeholder="Анна и Михаил" value="Анна и Михаил"></div>
-        <div class="field"><label>Длительность</label>
-          <select class="input" id="gdur">
-            <option>15 секунд</option>
-            <option selected>30 секунд</option>
-            <option>1 минута (+200 ₽)</option>
-          </select>
-        </div>
-      </div>
-      <div class="field" style="margin-top:14px"><label>Сценарий — о чём сказать</label>
-        <textarea class="input" id="gscript" rows="3" placeholder="Например: «5-секундная интрига → объявление пола → поздравление родителям»">После 5-секундной интриги драматично объявляем: «У вас будет… сын!». Поздравляем родителей.</textarea>
-        <div class="field-help">Пишите своими словами — ИИ адаптирует под выбранный стиль. Или возьмите готовый шаблон ниже одним кликом.</div>
+      <div class="field" style="margin-top:14px"><label>Свой текст — необязательно</label>
+        <textarea class="input" id="gscript" rows="3" placeholder="Например: «5-секундная интрига → объявление пола → поздравление родителям». Оставьте пустым — ИИ напишет сам по выбранному тону."></textarea>
+        <div class="field-help">Пишите своими словами — ИИ адаптирует под выбранный тон. Или возьмите шаблон одним кликом.</div>
         <div class="script-templates" data-group="gtmpl">
           <button type="button" class="script-tmpl" data-tmpl="cinema">🎬 Кинодрама</button>
           <button type="button" class="script-tmpl" data-tmpl="fun">😂 С приколом</button>
@@ -1533,19 +1551,32 @@ const FORMS = {
           <button type="button" class="script-tmpl" data-tmpl="quiet">✨ Загадочно</button>
         </div>
       </div>
-      <div class="field" style="margin-top:14px"><label>Фото родителей — необязательно</label>${uploader('Загрузи фото',0)}
-        <div class="field-help">Поможет ИИ задать тон голоса под ваш праздник. Можно пропустить.</div>
+    </div>
+
+    <div class="form-step">
+      <div class="form-step-head">
+        <div class="form-step-num">4</div>
+        <div class="form-step-title">Детали праздника</div>
+        <div class="form-step-hint">обязательно</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Имена родителей</label><input class="input" id="gparents" placeholder="Анна и Михаил" required></div>
+        <div class="field"><label>Дата праздника</label><input class="input" type="date" id="gdate" required></div>
       </div>
     </div>
 
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">5</div>
-        <div class="form-step-title">Куда прислать готовый файл</div>
+        <div class="form-step-title">Доставка и оплата</div>
+        <div class="form-step-hint">email обязателен</div>
       </div>
-      <div class="field"><label>Email доставки</label>
-        <input class="input" type="email" id="gemail" placeholder="ваш@email.ru" value="anna@mail.ru">
+      <div class="field"><label>Email для получения файла</label>
+        <input class="input" type="email" id="gemail" placeholder="ваш@email.ru" required>
         <div class="field-help">Готовый MP3/MP4 придёт в течение 5 минут после оплаты. Ссылка живёт 30 дней.</div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Промокод — необязательно</label>
+        <input class="input" id="gpromo" placeholder="Если есть — введите здесь">
       </div>
     </div>
 
@@ -2102,8 +2133,7 @@ function syncRevealStage(){
   const stage = document.getElementById('reveal-stage'); if(!stage) return;
   const rev = document.querySelector('.chips[data-group="greveal"] .chip.act');
   const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
-  const vibe = document.querySelector('.chips[data-group="gvibe"] .chip.act');
-  const dur = document.getElementById('gdur');
+  const scenario = document.getElementById('gscenario');
   const word = document.getElementById('reveal-word');
   const pill = document.getElementById('reveal-pill');
   const meta = document.getElementById('reveal-meta');
@@ -2113,10 +2143,9 @@ function syncRevealStage(){
   if(word) word.textContent = map[rv].w;
   if(pill) pill.firstChild.textContent = map[rv].e + ' ';
   if(meta){
-    const v = voice ? voice.querySelector('.vc-label').textContent.replace(/\+200.*/,'').trim() : '—';
-    const vb = vibe ? vibe.textContent.replace(/^[^\s]+\s/,'').trim().toLowerCase() : '—';
-    const d = dur ? dur.value : '30 секунд';
-    meta.textContent = `${v.toLowerCase()} голос · ${vb} · ${d}`;
+    const v = voice ? voice.querySelector('.vc-label').textContent.trim() : '—';
+    const sc = scenario ? scenario.value.toLowerCase() : 'торжественный';
+    meta.textContent = `${v.toLowerCase()} голос · ${sc}`;
   }
 }
 
@@ -2124,19 +2153,32 @@ function recalcGenderPrice(){
   const sum = document.getElementById('gprice-sum');
   const addEl = document.getElementById('gprice-add');
   if(!sum) return;
-  let total = 599;
-  const adds = [];
-  const star = document.querySelector('.voice-chip[data-vid="star"].act');
-  if(star){ total += 200; adds.push('звезда'); }
-  const dur = document.getElementById('gdur');
-  if(dur && dur.value && dur.value.indexOf('1 минута') !== -1){ total += 200; adds.push('1 мин'); }
-  sum.textContent = total + ' ₽';
-  addEl.textContent = adds.length ? '+ ' + adds.join(' · ') : 'базовый пакет';
+  sum.textContent = '599 ₽';
+  if(addEl) addEl.textContent = 'базовый пакет';
+}
+
+// Demo audio player
+function fmtTime(s){ s=Math.floor(s||0); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function initDemoPlayer(){
+  const wrap = document.getElementById('demo-player');
+  const audio = document.getElementById('demo-audio');
+  const btn = document.getElementById('demo-play');
+  const timeEl = document.getElementById('demo-time');
+  if(!wrap || !audio || !btn) return;
+  const icPlay = btn.querySelector('.demo-ic-play');
+  const icPause = btn.querySelector('.demo-ic-pause');
+  const setIcon = (playing)=>{ icPlay.style.display = playing?'none':''; icPause.style.display = playing?'':'none'; wrap.classList.toggle('playing', playing); };
+  btn.onclick = ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } };
+  audio.onplay  = ()=> setIcon(true);
+  audio.onpause = ()=> setIcon(false);
+  audio.onended = ()=>{ setIcon(false); if(timeEl) timeEl.textContent='0:00'; };
+  audio.ontimeupdate = ()=>{ if(timeEl) timeEl.textContent = fmtTime(audio.duration && isFinite(audio.duration) ? audio.duration-audio.currentTime : audio.currentTime); };
 }
 
 function initGenderForm(){
   syncRevealStage();
   recalcGenderPrice();
+  initDemoPlayer();
 }
 
 document.addEventListener('click', e=>{
@@ -2160,12 +2202,12 @@ document.addEventListener('click', e=>{
     if(ta && GENDER_SCRIPTS[tmpl.dataset.tmpl]){ ta.value = GENDER_SCRIPTS[tmpl.dataset.tmpl]; ta.focus(); }
     return;
   }
-  const revChip = e.target.closest('.chips.reveal-chips .chip, .chips[data-group="gvibe"] .chip, .chips[data-group="gfmt"] .chip');
+  const revChip = e.target.closest('.chips.reveal-chips .chip');
   if(revChip){ setTimeout(syncRevealStage, 0); }
 }, true);
 
 document.addEventListener('change', e=>{
-  if(e.target && e.target.id === 'gdur'){ recalcGenderPrice(); syncRevealStage(); }
+  if(e.target && e.target.id === 'gscenario'){ syncRevealStage(); }
 });
 
 // === DOCK BUILD ===
@@ -2329,7 +2371,83 @@ document.getElementById('fab').addEventListener('click',()=>{
 });
 
 // ORDER FORM submit
-document.getElementById('order-form').addEventListener('submit',e=>{e.preventDefault();go('success');});
+// === ORDER FORM submit + валидация + оплата ===
+function clearFieldErrors(){
+  document.querySelectorAll('.input-error,.chips-error').forEach(el=>el.classList.remove('input-error','chips-error'));
+  document.querySelectorAll('.field-error-msg').forEach(el=>el.remove());
+}
+function markError(el, msg){
+  if(!el) return;
+  el.classList.add(el.classList.contains('chips')?'chips-error':'input-error');
+  if(msg){
+    const m = document.createElement('div'); m.className='field-error-msg'; m.textContent=msg;
+    (el.closest('.field')||el.parentElement).appendChild(m);
+  }
+}
+function validateGender(){
+  clearFieldErrors();
+  let ok = true, firstBad = null;
+  const reveal = document.querySelector('.chips[data-group="greveal"] .chip.act');
+  if(!reveal){ markError(document.querySelector('.chips[data-group="greveal"]'),'Выберите пол'); ok=false; }
+  const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
+  if(!voice){ markError(document.querySelector('.voice-chips[data-group="gvoice"]'),'Выберите голос'); ok=false; }
+  const req = [
+    ['gparents','Укажите имена родителей'],
+    ['gdate','Выберите дату праздника'],
+    ['gemail','Укажите email для получения файла']
+  ];
+  for(const [id,msg] of req){
+    const el = document.getElementById(id);
+    if(el && !el.value.trim()){ markError(el,msg); ok=false; firstBad = firstBad||el; }
+  }
+  const email = document.getElementById('gemail');
+  if(email && email.value.trim() && !email.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)){
+    markError(email,'Похоже, в адресе опечатка'); ok=false; firstBad=firstBad||email;
+  }
+  if(!ok && firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'center'}); }
+  return ok;
+}
+function collectGenderOrder(){
+  const reveal = document.querySelector('.chips[data-group="greveal"] .chip.act');
+  const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
+  return {
+    product: 'gender',
+    baby_gender: reveal ? reveal.dataset.rv : '',
+    voice_type: voice ? voice.dataset.vid : '',
+    scenario: (document.getElementById('gscenario')||{}).value || '',
+    script: (document.getElementById('gscript')||{}).value || '',
+    parent_names: (document.getElementById('gparents')||{}).value || '',
+    party_date: (document.getElementById('gdate')||{}).value || '',
+    email: (document.getElementById('gemail')||{}).value || '',
+    promo_code: (document.getElementById('gpromo')||{}).value || ''
+  };
+}
+
+document.getElementById('order-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const prod = document.querySelector('.tabs-pill .tp.act')?.dataset.prod
+    || (document.getElementById('order-hero')||{}).dataset?.prod;
+  if(prod !== 'gender'){ go('success'); return; }
+
+  if(!validateGender()) return;
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Переходим к оплате…'; }
+
+  try{
+    const res = await fetch('/api/payment-init', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(collectGenderOrder())
+    });
+    const data = await res.json();
+    if(res.ok && data.paymentUrl){ window.location.href = data.paymentUrl; return; }
+    throw new Error(data.error || 'Не удалось создать оплату');
+  }catch(err){
+    if(btn){ btn.disabled = false; btn.textContent = orig; }
+    alert('Оплата временно недоступна: ' + err.message + '\\nПопробуйте позже или напишите hello@podarimoment.ru');
+  }
+});
 
 // INIT — read URL and route
 buildProdTabs();

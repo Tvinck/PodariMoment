@@ -3,6 +3,7 @@
 const { getAdminClient } = require('./_lib/supabase');
 const { parseKieResult, storeAudioToOrder } = require('./_generateVoice');
 const { rateLimit } = require('./_rateLimit');
+const { sendEmail, emailDone, emailFailed } = require('./_sendEmail');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -40,12 +41,14 @@ module.exports = async (req, res) => {
     if (!order) { res.status(200).send('OK'); return; }
 
     if (status === 'completed' && audioUrl) {
-      await storeAudioToOrder(order, audioUrl); // file_url + done + done_at
+      const fileUrl = await storeAudioToOrder(order, audioUrl); // file_url + done + done_at
+      await sendEmail(order.email, emailDone({ ...order, file_url: fileUrl })); // письмо 2
     } else if (status === 'failed') {
       await sb.from('orders').update({
         payment_status: 'generation_failed',
         error_log: JSON.stringify(body).slice(0, 2000),
       }).eq('id', order.id);
+      await sendEmail(order.email, emailFailed(order)); // письмо 3
     }
   } catch (e) {
     try {

@@ -5,6 +5,7 @@ const { verifyToken } = require('./_lib/tbank');
 const { getAdminClient } = require('./_lib/supabase');
 const { generateVoice } = require('./_generateVoice');
 const { rateLimit } = require('./_rateLimit');
+const { sendEmail, emailPaid } = require('./_sendEmail');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -62,8 +63,9 @@ module.exports = async (req, res) => {
         paid_at: mapped === 'paid' ? new Date().toISOString() : undefined,
       }).eq('id', orderId).select().single();
 
-      // 2. Если оплачено и файл ещё не сгенерирован — запускаем авто-генерацию
+      // 2. Если оплачено и файл ещё не сгенерирован — письмо + авто-генерация
       if (mapped === 'paid' && order && !order.file_url) {
+        await sendEmail(order.email, emailPaid(order)); // письмо 1
         try {
           await generateVoice(order); // внутри выставит статус processing + kie_task_id
         } catch (genErr) {

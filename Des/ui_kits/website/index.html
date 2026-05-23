@@ -851,7 +851,27 @@ body.legal-open{overflow:hidden}
 .afilter:hover{background:#2d2d40;color:#fff}
 .afilter.act{background:#fff;color:#0a0a0f;border-color:#fff}
 .admin-status-sel{font:inherit;font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#22222e;color:#fff;cursor:pointer}
-.admin-status-sel.s-ok{color:#4ade80}.admin-status-sel.s-wip{color:var(--gold)}.admin-status-sel.s-new{color:#c4b5fd}.admin-status-sel.s-err{color:#ff5470}
+.admin-status-sel.s-ok{color:#4ade80}.admin-status-sel.s-pending{color:rgba(255,255,255,0.6)}.admin-status-sel.s-paid{color:#5b86e5}.admin-status-sel.s-processing{color:var(--gold)}.admin-status-sel.s-refunded{color:#c4b5fd}.admin-status-sel.s-err{color:#ff5470}
+.admin-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* статус-бейджи нового потока */
+.s-pending{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6)}
+.s-paid{background:rgba(91,134,229,0.16);color:#7aa5ff}
+.s-processing{background:rgba(255,209,102,0.16);color:var(--gold);animation:stPulse 1.4s ease-in-out infinite}
+.s-refunded{background:rgba(196,181,253,0.16);color:#c4b5fd}
+@keyframes stPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+
+/* ЛК: скачивание и прогресс */
+.ord-card-v2{padding:18px;border-radius:16px;background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.ord-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.acc-download{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;border-radius:14px;background:var(--grad);color:#1a0d05;font-weight:800;font-size:16px;text-decoration:none;box-shadow:0 8px 24px rgba(255,107,53,0.35);transition:transform .2s var(--spring)}
+.acc-download:hover{transform:translateY(-2px)}
+.acc-download-meta{font-size:11px;opacity:0.5;text-align:center}
+.acc-progress{height:8px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden}
+.acc-progress-bar{height:100%;width:0;border-radius:999px;background:var(--grad);animation:accProg 30s cubic-bezier(0.2,0.6,0.2,1) forwards}
+@keyframes accProg{0%{width:4%}100%{width:90%}}
+.acc-progress-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;opacity:0.7;flex-wrap:wrap}
+@media (prefers-reduced-motion: reduce){.s-processing{animation:none}.acc-progress-bar{animation:none;width:60%}}
 </style>
 </head>
 <body>
@@ -1737,12 +1757,13 @@ const STATUSLABEL = {ok:'готово',wip:'в работе',new:'новый',op
 /* ==== ACCOUNT ==== */
 // === ЛИЧНЫЙ КАБИНЕТ (реальные данные из Supabase через /api/my-orders) ===
 const ACC_STATUS = {
-  pending:   {label:'Ожидает оплаты', cls:'s-wip'},
-  paid:      {label:'Оплачен',        cls:'s-new'},
-  processing:{label:'В работе',       cls:'s-wip'},
-  done:      {label:'Готов',          cls:'s-ok'},
-  refunded:  {label:'Возврат',        cls:'s-closed'},
-  failed:    {label:'Ошибка оплаты',  cls:'s-err'}
+  pending:          {label:'Ожидает оплаты',        cls:'s-pending',    icon:'🕐'},
+  paid:             {label:'Оплачен, генерируем…',  cls:'s-paid',       icon:'💳'},
+  processing:       {label:'Создаём ваш голос…',    cls:'s-processing', icon:'⚙️'},
+  done:             {label:'Готов!',                cls:'s-ok',         icon:'✅'},
+  generation_failed:{label:'Ошибка — напишите нам', cls:'s-err',        icon:'❌'},
+  refunded:         {label:'Возврат',               cls:'s-refunded',   icon:'↩️'},
+  failed:           {label:'Ошибка оплаты',         cls:'s-err',        icon:'❌'}
 };
 function fmtDateTime(iso){
   if(!iso) return '';
@@ -1796,17 +1817,30 @@ function accOrdersHtml(orders, email){
   return accShell(`
     <div class="orders-list">
       ${orders.map(o=>{
-        const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-new'};
-        return `<div class="ord-row">
-          <div class="ord-row-main">
-            <div class="ord-row-id">№ ${String(o.id).slice(0,8)}</div>
-            <div class="ord-row-name">Голос для гендер-пати</div>
-            <div class="ord-row-date">${fmtDateTime(o.created_at)}</div>
+        const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-new', icon:'•'};
+        const isProc = o.payment_status==='processing' || o.payment_status==='paid';
+        const isDone = o.payment_status==='done' && o.file_url;
+        return `<div class="ord-card-v2">
+          <div class="ord-card-top">
+            <div>
+              <div class="ord-row-id">№ ${String(o.id).slice(0,8)}</div>
+              <div class="ord-row-name">Голос для гендер-пати</div>
+              <div class="ord-row-date">${fmtDateTime(o.created_at)}</div>
+            </div>
+            <span class="status ${st.cls}">${st.icon} ${st.label}</span>
           </div>
-          <div class="ord-row-side">
-            <span class="status ${st.cls}">${st.label}</span>
-            ${o.file_url ? `<a class="btn-mini btn-mini-orange" href="${o.file_url}" target="_blank" rel="noopener">↓ Скачать файл</a>` : ''}
-          </div>
+          ${isDone ? `
+            <a class="acc-download" href="${o.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать голос</a>
+            <div class="acc-download-meta">Формат MP3 · Для личного использования</div>
+          ` : ''}
+          ${isProc ? `
+            <div class="acc-progress"><div class="acc-progress-bar"></div></div>
+            <div class="acc-progress-row">
+              <span>Обычно занимает 1–2 минуты</span>
+              <button class="btn-mini" onclick="renderAccount()" type="button">🔄 Обновить статус</button>
+            </div>
+          ` : ''}
+          ${o.payment_status==='generation_failed' ? `<div class="field-help" style="color:#ff5470">Что-то пошло не так при генерации. Напишите на hello@podarimoment.ru — поможем.</div>` : ''}
         </div>`;
       }).join('')}
     </div>
@@ -1893,14 +1927,15 @@ let adminFilter = 'all';
 let adminOrders = [];
 const ADMIN_PRICE = 599;
 const ADMIN_STATUS = {
-  pending:   {label:'Ожидает оплаты', cls:'s-wip'},
-  paid:      {label:'Оплачен',        cls:'s-new'},
-  processing:{label:'В работе',       cls:'s-wip'},
-  done:      {label:'Готов',          cls:'s-ok'},
-  refunded:  {label:'Возврат',        cls:'s-closed'},
-  failed:    {label:'Ошибка',         cls:'s-err'}
+  pending:          {label:'Ожидает оплаты',  cls:'s-pending'},
+  paid:             {label:'Оплачен',         cls:'s-paid'},
+  processing:       {label:'Генерируется…',   cls:'s-processing'},
+  done:             {label:'Готов ✓',         cls:'s-ok'},
+  generation_failed:{label:'Ошибка генерации',cls:'s-err'},
+  refunded:         {label:'Возврат',         cls:'s-refunded'},
+  failed:           {label:'Ошибка оплаты',   cls:'s-err'}
 };
-const ADMIN_STATUS_ORDER = ['pending','paid','processing','done','refunded','failed'];
+const ADMIN_STATUS_ORDER = ['pending','paid','processing','done','generation_failed','refunded','failed'];
 const GENDER_LABEL = {boy:'💙 Мальчик', girl:'💗 Девочка', surprise:'❓ Сюрприз'};
 const VOICE_LABEL = {male:'Мужской', female:'Женский', child:'Детский'};
 function adminPwd(){ try{ return sessionStorage.getItem('pm_admin_pwd')||''; }catch(_){ return ''; } }
@@ -1993,9 +2028,12 @@ function renderAdminOrdersTable(){
   else if(adminFilter==='refunded') list = list.filter(o=>['refunded','failed'].includes(o.payment_status));
   if(list.length===0) return '<div style="padding:40px;text-align:center;opacity:0.5;font-size:14px">Заказов нет</div>';
   return `<div class="atable-wrap"><table class="atable"><thead><tr>
-    <th>№</th><th>Продукт</th><th>Email</th><th>Пол</th><th>Голос</th><th>Дата праздника</th><th>Сумма</th><th>Статус</th><th>Создан</th><th></th>
+    <th>№</th><th>Продукт</th><th>Email</th><th>Пол</th><th>Голос</th><th>Дата праздника</th><th>Сумма</th><th>Статус</th><th>Создан</th><th>Действия</th>
   </tr></thead><tbody>
-    ${list.map(o=>`<tr>
+    ${list.map(o=>{
+      const canGen = (o.payment_status==='paid' || o.payment_status==='generation_failed') && !o.file_url;
+      const canCheck = o.payment_status==='processing';
+      return `<tr>
       <td><b>${String(o.id).slice(0,8)}</b></td>
       <td>Гендер-пати</td>
       <td style="opacity:0.7">${o.email||''}</td>
@@ -2009,8 +2047,12 @@ function renderAdminOrdersTable(){
         </select>
       </td>
       <td style="opacity:0.6;white-space:nowrap">${fmtDateTime(o.created_at)}</td>
-      <td><button class="btn-mini ${o.file_url?'btn-mini-orange':''}" onclick="adminOpenFileModal('${o.id}')">📎 Файл</button></td>
-    </tr>`).join('')}
+      <td><div class="admin-actions">
+        ${canGen ? `<button class="btn-mini btn-mini-orange" onclick="adminConfirmGenerate('${o.id}')">🎙 Сгенерировать</button>` : ''}
+        ${canCheck ? `<button class="btn-mini" onclick="adminCheckStatus('${o.id}', this)">🔄 Статус</button>` : ''}
+        <button class="btn-mini ${o.file_url?'btn-mini-orange':''}" onclick="adminOpenFileModal('${o.id}')">📎 Файл</button>
+      </div></td>
+    </tr>`;}).join('')}
   </tbody></table></div>`;
 }
 async function adminPatch(id, patch){
@@ -2052,8 +2094,67 @@ async function adminSaveFile(id){
     closeLegalModal(); renderAdminPanel();
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
 }
+// Превью текста сценария (зеркалит шаблоны из api/_generateVoice.js)
+function adminGenPreview(o){
+  const noun = ({boy:'сыночек',girl:'доченька',surprise:'малыш'})[o.baby_gender]||'малыш';
+  const names = o.parent_names||'дорогие родители';
+  const date = (o.party_date||'').split('-').reverse().join('.') || 'совсем скоро';
+  const sc = (o.scenario||'').split(' — ');
+  const custom = sc.slice(1).join(' — ').trim();
+  if(custom) return custom.replace(/\{?parent_names\}?/gi,names).replace(/\{?baby_gender\}?/gi,noun).replace(/\{?party_date\}?/gi,date);
+  const key = ({'торжественный':'formal','с юмором':'funny','душевный':'warm','загадочный':'mysterious'})[(sc[0]||'').trim().toLowerCase()]||'formal';
+  const T = {
+    formal:`Дорогие ${names}! Я ваш ${noun}, и я уже не могу дождаться встречи с вами. Совсем скоро, ${date}, вы узнаете, кто я. Я люблю вас!`,
+    funny:`Эй, ${names}! Это я, ваш ${noun}! Да-да, тот самый, из животика! Готовьтесь — ${date} я раскрою главный секрет года. Я уже смеюсь!`,
+    warm:`Мамочка и папочка, ${names}... Я чувствую вашу любовь каждый день. ${date} вы узнаете, кто будет любить вас всю жизнь — ваш ${noun}.`,
+    mysterious:`Тссс... ${names}. Секрет хранится совсем недолго. ${date} всё откроется. Я жду не дождусь нашей встречи...`
+  };
+  return T[key];
+}
+function adminConfirmGenerate(id){
+  const o = adminOrders.find(x=>x.id===id); if(!o) return;
+  const m = document.getElementById('legal-modal');
+  document.getElementById('legal-modal-title').textContent = 'Запустить генерацию голоса?';
+  document.getElementById('legal-modal-body').innerHTML = `
+    <p>Заказ <b>${String(id).slice(0,8)}</b> · голос: <b>${VOICE_LABEL[o.voice_type]||o.voice_type}</b></p>
+    <h3>Текст сценария</h3>
+    <p style="background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;font-style:italic">${adminGenPreview(o)}</p>
+    <div class="field-error-msg" id="admin-gen-error" style="display:none"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="cta" type="button" id="admin-gen-go" onclick="adminGenerate('${id}')">Запустить →</button>
+      <button class="btn-ghost" type="button" onclick="closeLegalModal()">Отмена</button>
+    </div>`;
+  m.style.display='flex'; document.body.classList.add('legal-open');
+}
+async function adminGenerate(id){
+  const err = document.getElementById('admin-gen-error');
+  const go = document.getElementById('admin-gen-go');
+  if(go){ go.disabled=true; go.textContent='Запускаем…'; }
+  try{
+    const res = await fetch('/api/admin-generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), orderId:id})});
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    const o = adminOrders.find(x=>x.id===id); if(o){ o.payment_status='processing'; o.kie_task_id=data.task_id; }
+    closeLegalModal(); renderAdminPanel();
+  }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} if(go){go.disabled=false;go.textContent='Запустить →';} }
+}
+async function adminCheckStatus(id, btn){
+  const orig = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='Проверяем…'; }
+  try{
+    const res = await fetch(`/api/admin-check-status?orderId=${encodeURIComponent(id)}&password=${encodeURIComponent(adminPwd())}`);
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    const o = adminOrders.find(x=>x.id===id);
+    if(o){ if(data.status) o.payment_status=data.status; if(data.file_url) o.file_url=data.file_url; }
+    renderAdminPanel();
+  }catch(e){ alert('Не удалось проверить статус: '+e.message); if(btn){btn.disabled=false;btn.textContent=orig;} }
+}
 window.adminLogin=adminLogin; window.adminLogout=adminLogout; window.adminSetFilter=adminSetFilter;
 window.adminSetStatus=adminSetStatus; window.adminOpenFileModal=adminOpenFileModal; window.adminSaveFile=adminSaveFile;
+window.adminConfirmGenerate=adminConfirmGenerate; window.adminGenerate=adminGenerate; window.adminCheckStatus=adminCheckStatus;
 function renderAdminUsers(){
   return `<div class="search-bar"><span style="opacity:0.4">🔍</span><input class="input" placeholder="Поиск пользователя..."><button class="btn-ghost" style="padding:10px 16px;font-size:12px">+ Добавить</button></div>
   <div class="atable-wrap"><table class="atable"><thead><tr><th>Пользователь</th><th>Email</th><th>Заказов</th><th>Сумма</th><th>С нами с</th><th></th></tr></thead><tbody>

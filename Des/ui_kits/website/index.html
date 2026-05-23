@@ -167,6 +167,9 @@ img{max-width:100%;display:block}
 .products{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .products-single{max-width:520px;margin:0 auto;grid-template-columns:1fr}
 .products-single .pcard.gender{min-height:320px}
+.reviews-empty{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:48px 24px;border-radius:24px;background:rgba(255,255,255,0.02);border:1px dashed var(--line)}
+.reviews-empty-icon{font-size:48px;line-height:1}
+.reviews-empty-text{font-size:16px;opacity:0.7;max-width:420px;margin:0}
 @media (max-width:1080px){.products{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.products{grid-template-columns:1fr}}
 .pcard{position:relative;border-radius:28px;padding:24px;min-height:260px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;transition:transform .4s var(--spring);border:none;text-align:left;font:inherit;color:inherit}
@@ -979,11 +982,11 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
     </section>
 
     <section class="section" id="reviews">
-      <div class="section-head"><div class="kicker">Отзывы</div><h2>Что говорят <em>наши клиенты</em></h2></div>
-      <div class="reviews">
-        <div class="review"><div class="stars">★★★★★</div><p class="review-text">Заказала маме на юбилей — она плакала от счастья. Голос её любимой певицы, текст про её жизнь.</p><div class="review-who"><div class="review-ava a1">М</div><div class="review-meta">Марина<span>Москва · песня</span></div></div></div>
-        <div class="review"><div class="stars">★★★★★</div><p class="review-text">Логотип для кофейни сделали за час. 3 варианта, все классные. Заказчик в восторге.</p><div class="review-who"><div class="review-ava a2">Д</div><div class="review-meta">Дмитрий<span>СПб · логотип</span></div></div></div>
-        <div class="review"><div class="stars">★★★★★</div><p class="review-text">Оживили фото бабушки 1965 года — она «улыбается». Семья плакала. Магия.</p><div class="review-who"><div class="review-ava a3">К</div><div class="review-meta">Катя<span>Казань · оживить</span></div></div></div>
+      <div class="section-head"><div class="kicker">Отзывы</div><h2>Здесь будут <em>ваши истории</em></h2></div>
+      <div class="reviews-empty">
+        <div class="reviews-empty-icon">🎀</div>
+        <p class="reviews-empty-text">Станьте первым — расскажите о своём опыте после получения заказа.</p>
+        <button class="cta" data-prod="gender">Заказать голос →</button>
       </div>
     </section>
   </div>
@@ -1065,38 +1068,33 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
         </div>
       </div>
       <div class="footer-col">
-        <div class="footer-col-title">Продукты</div>
-        <a data-prod="song">ИИ-песня</a>
-        <a data-prod="video">Видео из фото</a>
-        <a data-prod="star">Голос звезды</a>
+        <div class="footer-col-title">Продукт</div>
         <a data-prod="gender">Голос для гендер-пати</a>
-        <a data-prod="photo">Фото мечты</a>
-        <a data-prod="animate">Оживить фото</a>
+        <a data-scroll="how">Как это работает</a>
+        <a data-go="account">Личный кабинет</a>
       </div>
       <div class="footer-col">
-        <div class="footer-col-title">Для бизнеса</div>
-        <a data-prod="logo">Логотип</a>
-        <a data-prod="card">Визитка</a>
-        <a data-prod="market">Карточка для маркета</a>
-        <a data-prod="postcard">Открытка</a>
-        <a data-go="catalog">Каталог работ</a>
+        <div class="footer-col-title">Документы</div>
+        <a data-go="offer">Оферта</a>
+        <a data-go="privacy">Политика конфиденциальности</a>
+        <a data-go="refund">Возврат и доставка</a>
       </div>
       <div class="footer-col">
         <div class="footer-col-title">Связь</div>
         <a href="mailto:hello@podarimoment.ru">hello@podarimoment.ru</a>
-        <a href="tel:+79990000000">+7 (999) 000-00-00</a>
-        <a href="https://t.me/podarimoment" target="_blank" rel="noopener">@podarimoment в Telegram</a>
+        <a href="tel:[ВСТАВИТЬ_ТЕЛЕФОН]">[ВСТАВИТЬ_ТЕЛЕФОН]</a>
+        <a href="https://t.me/[ВСТАВИТЬ_TELEGRAM]" target="_blank" rel="noopener">[ВСТАВИТЬ_TELEGRAM] в Telegram</a>
         <a data-go="account">Личный кабинет</a>
       </div>
     </div>
     <div class="footer-legal">
       <div class="footer-legal-block">
         <div class="footer-legal-row"><b>ИП КОШЕЛЕВ АРТЁМ НИКОЛАЕВИЧ</b></div>
-        <div class="footer-legal-row">ИНН: 000000000000 · ОГРНИП: 000000000000000</div>
+        <div class="footer-legal-row">ИНН: [ВСТАВИТЬ_ИНН] · ОГРНИП: [ВСТАВИТЬ_ОГРНИП]</div>
         <div class="footer-legal-row">Юр. адрес: Россия</div>
       </div>
       <div class="footer-legal-block right">
-        <div class="footer-legal-row"><a>Оферта</a> · <a>Политика</a> · <a>Возврат</a></div>
+        <div class="footer-legal-row"><a data-go="offer">Оферта</a> · <a data-go="privacy">Политика</a> · <a data-go="refund">Возврат</a></div>
         <div class="footer-legal-row">© 2026 ПодариМомент. Все права защищены.</div>
       </div>
     </div>

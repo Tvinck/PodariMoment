@@ -3,6 +3,7 @@
 // Т-Банк ожидает в ответ тело "OK".
 const { verifyToken } = require('./_lib/tbank');
 const { getAdminClient } = require('./_lib/supabase');
+const { generateVoice } = require('./_generateVoice');
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -41,10 +42,23 @@ module.exports = async (req, res) => {
   if (orderId && mapped) {
     try {
       const sb = getAdminClient();
-      await sb.from('orders').update({
+      // 1. Фиксируем оплату: pending → paid
+      const { data: order } = await sb.from('orders').update({
         payment_status: mapped,
         payment_id: body.PaymentId ? String(body.PaymentId) : undefined,
-      }).eq('id', orderId);
+      }).eq('id', orderId).select().single();
+
+      // 2. Если оплачено и файл ещё не сгенерирован — запускаем авто-генерацию
+      if (mapped === 'paid' && order && !order.file_url) {
+        try {
+          await generateVoice(order); // внутри выставит статус processing + kie_task_id
+        } catch (genErr) {
+          await sb.from('orders').update({
+            payment_status: 'generation_failed',
+            error_log: String(genErr && genErr.message || genErr),
+          }).eq('id', orderId);
+        }
+      }
     } catch { /* проглатываем — Т-Банк повторит уведомление при не-OK */ }
   }
 

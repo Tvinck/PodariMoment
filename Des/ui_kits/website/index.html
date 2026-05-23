@@ -827,6 +827,21 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .legal-modal-body strong{color:rgba(255,255,255,0.92)}
 .legal-modal-body .lm-meta{font-size:12px;opacity:0.5;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
 body.legal-open{overflow:hidden}
+.s-err{background:rgba(255,84,112,0.15);color:#ff5470}
+
+/* === ЛИЧНЫЙ КАБИНЕТ — заказы === */
+.acc-loading{padding:48px;text-align:center;opacity:0.6;font-size:14px}
+.acc-search{max-width:520px;margin:0 auto;padding:32px;border-radius:20px;background:rgba(255,255,255,0.02);border:1px solid var(--line)}
+.acc-search-title{font-size:15px;font-weight:700;margin-bottom:14px}
+.acc-search-row{display:flex;gap:10px;flex-wrap:wrap}
+.acc-search-row .input{flex:1;min-width:200px}
+.orders-list{display:flex;flex-direction:column;gap:10px}
+.ord-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-radius:16px;background:var(--card);border:1px solid var(--line);flex-wrap:wrap}
+.ord-row-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ord-row-id{font-size:11px;letter-spacing:0.04em;opacity:0.5;font-weight:600;font-family:'JetBrains Mono',monospace}
+.ord-row-name{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+.ord-row-date{font-size:12px;opacity:0.55}
+.ord-row-side{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -1722,90 +1737,122 @@ const PRODNAME = {song:'Песня',video:'Видео',star:'Звезда',photo
 const STATUSLABEL = {ok:'готово',wip:'в работе',new:'новый',open:'открыт',closed:'закрыт'};
 
 /* ==== ACCOUNT ==== */
+// === ЛИЧНЫЙ КАБИНЕТ (реальные данные из Supabase через /api/my-orders) ===
+const ACC_STATUS = {
+  pending:   {label:'Ожидает оплаты', cls:'s-wip'},
+  paid:      {label:'Оплачен',        cls:'s-new'},
+  processing:{label:'В работе',       cls:'s-wip'},
+  done:      {label:'Готов',          cls:'s-ok'},
+  refunded:  {label:'Возврат',        cls:'s-closed'},
+  failed:    {label:'Ошибка оплаты',  cls:'s-err'}
+};
+function fmtDateTime(iso){
+  if(!iso) return '';
+  const d = new Date(iso); if(isNaN(d)) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function getStoredEmail(){
+  try{ const u = JSON.parse(localStorage.getItem('pm_user')||'{}'); return (u.email||'').trim(); }catch(_){ return ''; }
+}
+function accShell(inner){
+  return `<section class="section">
+    <div class="acc-hero">
+      <div class="acc-hero-grid"></div>
+      <div class="acc-orb o1"></div><div class="acc-orb o2"></div><div class="acc-orb o3"></div>
+      <div class="acc-hero-row">
+        <div class="acc-id">
+          <div class="acc-ava">🎀</div>
+          <div>
+            <div class="kicker">Личный кабинет</div>
+            <h2>Ваши заказы</h2>
+            <div class="acc-meta" id="acc-email-meta"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="acc-content">${inner}</div>
+  </section>`;
+}
+function accEmailForm(prefill){
+  return accShell(`
+    <div class="acc-search">
+      <div class="acc-search-title">Введите email, на который оформляли заказ</div>
+      <div class="acc-search-row">
+        <input class="input" id="acc-email-input" type="email" placeholder="ваш@email.ru" value="${prefill||''}">
+        <button class="cta" type="button" onclick="accLoadByInput()">Найти заказы →</button>
+      </div>
+      <div class="field-help">Мы покажем все заказы, оформленные на этот адрес.</div>
+    </div>`);
+}
+function accEmpty(email){
+  return accShell(`
+    <div class="reviews-empty">
+      <div class="reviews-empty-icon">🔍</div>
+      <p class="reviews-empty-text">На <b>${email}</b> заказов пока нет.</p>
+      <button class="cta" data-prod="gender">Заказать голос →</button>
+      <button class="btn-ghost" type="button" onclick="accForget()" style="margin-top:4px">Искать по другому email</button>
+    </div>`);
+}
+function accOrdersHtml(orders, email){
+  return accShell(`
+    <div class="orders-list">
+      ${orders.map(o=>{
+        const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-new'};
+        return `<div class="ord-row">
+          <div class="ord-row-main">
+            <div class="ord-row-id">№ ${String(o.id).slice(0,8)}</div>
+            <div class="ord-row-name">Голос для гендер-пати</div>
+            <div class="ord-row-date">${fmtDateTime(o.created_at)}</div>
+          </div>
+          <div class="ord-row-side">
+            <span class="status ${st.cls}">${st.label}</span>
+            ${o.file_url ? `<a class="btn-mini btn-mini-orange" href="${o.file_url}" target="_blank" rel="noopener">↓ Скачать файл</a>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:18px;text-align:center">
+      <button class="btn-ghost" type="button" onclick="accForget()">Искать по другому email</button>
+    </div>`);
+}
 function renderAccount(){
   const view = document.getElementById('view-account');
-  const myOrders = ORDERS.slice(0,6);
-  view.innerHTML = `
-    <section class="section">
-      <div class="acc-hero">
-        <div class="acc-hero-grid"></div>
-        <div class="acc-orb o1"></div><div class="acc-orb o2"></div><div class="acc-orb o3"></div>
-        <div class="acc-spark sp1"></div><div class="acc-spark sp2"></div><div class="acc-spark sp3"></div>
-        <div class="acc-hero-row">
-          <div class="acc-id">
-            <div class="acc-ava">А<span class="acc-ava-dot"></span></div>
-            <div>
-              <div class="kicker">Личный кабинет</div>
-              <h2>Привет, Анна <span class="acc-wave">👋</span></h2>
-              <div class="acc-meta">anna@mail.ru · с 12.10.24 · ⭐ Постоянный клиент</div>
-            </div>
-          </div>
-          <div class="acc-stats">
-            <div class="acc-stat"><div class="acc-stat-num gold">${myOrders.length}</div><div class="acc-stat-lab">заказов</div></div>
-            <div class="acc-stat"><div class="acc-stat-num">${myOrders.reduce((s,o)=>s+o.sum,0)} ₽</div><div class="acc-stat-lab">потрачено</div></div>
-            <div class="acc-stat"><div class="acc-stat-num">⭐ 4.9</div><div class="acc-stat-lab">оценка</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="acc-tabs">
-        <button class="acc-tab act" onclick="accTab(this,'orders')">Мои заказы</button>
-        <button class="acc-tab" onclick="accTab(this,'results')">Результаты</button>
-        <button class="acc-tab" onclick="accTab(this,'support')">Чат с поддержкой</button>
-        <button class="acc-tab" onclick="accTab(this,'settings')">Настройки</button>
-      </div>
-
-      <div class="acc-pane" data-pane="orders">
-        <div class="orders-grid">
-          ${myOrders.map(o=>`
-            <div class="ord-card">
-              <div class="ord-thumb prod-${o.prod}">${{song:'♪',video:'▶',star:'★',photo:'✦',animate:'⟳',postcard:'✉',logo:'◆',card:'❑',market:'⊞'}[o.prod]||'•'}</div>
-              <div class="ord-info">
-                <div class="ord-id">${o.id} · ${PRODNAME[o.prod]||o.prod}</div>
-                <div class="ord-date">${o.date}</div>
-                <div class="ord-actions">
-                  ${o.status==='ok'?'<button class="btn-mini btn-mini-orange">↓ Скачать</button><button class="btn-mini">▶ Превью</button>':''}
-                  ${o.status==='wip'?'<span class="status s-wip">в работе</span>':''}
-                  ${o.status==='new'?'<span class="status s-new">оплачен</span>':''}
-                </div>
-              </div>
-              <div class="ord-sum">${o.sum} ₽</div>
-            </div>`).join('')}
-        </div>
-      </div>
-
-      <div class="acc-pane" data-pane="results" style="display:none">
-        <div class="cat-grid">
-          ${myOrders.filter(o=>o.status==='ok').map(o=>`
-            <div class="cat-item">
-              <div class="cat-item-art prod-${o.prod}">${{song:'♪',video:'▶',star:'★',photo:'✦',animate:'⟳',postcard:'✉',logo:'◆',card:'❑',market:'⊞'}[o.prod]||'•'}</div>
-              <div class="cat-item-tag">${PRODNAME[o.prod]||o.prod}</div>
-              ${['song','video','star','animate'].includes(o.prod)?'<div class="cat-item-play">▶</div>':''}
-              <div class="cat-item-meta">${o.id}<span>${o.date}</span></div>
-            </div>`).join('')}
-        </div>
-      </div>
-
-      <div class="acc-pane" data-pane="support" style="display:none">
-        ${renderClientChat()}
-      </div>
-
-      <div class="acc-pane" data-pane="settings" style="display:none">
-        <div class="form" style="max-width:560px">
-          <div class="field-row">
-            <div class="field"><label>Имя</label><input class="input" value="Анна Петрова"></div>
-            <div class="field"><label>Email</label><input class="input" value="anna@mail.ru"></div>
-          </div>
-          <div class="field"><label>Телефон</label><input class="input" value="+7 999 000 00 00"></div>
-          <div class="field"><label>Уведомления</label>
-            <div class="chips" data-group="notif">
-              <div class="chip act">📧 Email</div><div class="chip act">📱 SMS</div><div class="chip">💬 Telegram</div>
-            </div>
-          </div>
-          <button class="cta" type="button" style="align-self:flex-start;margin-top:8px">Сохранить</button>
-        </div>
-      </div>
-    </section>`;
+  const email = getStoredEmail();
+  if(!email){ view.innerHTML = accEmailForm(''); return; }
+  view.innerHTML = accShell('<div class="acc-loading">Загружаем ваши заказы…</div>');
+  accFetch(email);
 }
+async function accFetch(email){
+  const view = document.getElementById('view-account');
+  try{
+    const res = await fetch('/api/my-orders', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email})
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    const orders = data.orders||[];
+    view.innerHTML = orders.length ? accOrdersHtml(orders, email) : accEmpty(email);
+    const meta = document.getElementById('acc-email-meta'); if(meta) meta.textContent = email;
+  }catch(err){
+    view.innerHTML = accEmailForm(email);
+    const c = document.getElementById('acc-content');
+    if(c) c.insertAdjacentHTML('beforeend', `<div class="field-error-msg" style="text-align:center;margin-top:10px">Не удалось загрузить: ${err.message}</div>`);
+  }
+}
+function accLoadByInput(){
+  const inp = document.getElementById('acc-email-input');
+  const email = (inp && inp.value || '').trim();
+  if(!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)){ if(inp) inp.classList.add('input-error'); return; }
+  try{ localStorage.setItem('pm_user', JSON.stringify({email})); }catch(_){}
+  renderAccount();
+}
+function accForget(){
+  try{ localStorage.removeItem('pm_user'); }catch(_){}
+  document.getElementById('view-account').innerHTML = accEmailForm('');
+}
+window.accLoadByInput = accLoadByInput; window.accForget = accForget;
 function accTab(el,pane){
   el.parentElement.querySelectorAll('.acc-tab').forEach(t=>t.classList.remove('act'));
   el.classList.add('act');
@@ -2549,13 +2596,18 @@ document.getElementById('order-form').addEventListener('submit', async e=>{
   const orig = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = 'Переходим к оплате…'; }
 
+  const payload = collectGenderOrder();
   try{
     const res = await fetch('/api/payment-init', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(collectGenderOrder())
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if(res.ok && data.paymentUrl){ window.location.href = data.paymentUrl; return; }
+    if(res.ok && data.paymentUrl){
+      // Запоминаем email+orderId — личный кабинет найдёт по нему заказы
+      try{ localStorage.setItem('pm_user', JSON.stringify({email:payload.email, orderId:data.orderId})); }catch(_){}
+      window.location.href = data.paymentUrl; return;
+    }
     throw new Error(data.error || 'Не удалось создать оплату');
   }catch(err){
     if(btn){ btn.disabled = false; btn.textContent = orig; }

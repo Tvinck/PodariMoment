@@ -6,7 +6,9 @@ const { randomUUID } = require('crypto');
 const { genToken } = require('./_lib/tbank');
 const { getAdminClient } = require('./_lib/supabase');
 
-const PRICE_KOPECKS = 59900; // 599 ₽
+// Цена по тарифу (в копейках)
+const TARIFF_KOPECKS = { basic: 39900, premium: 59900, vip: 99900 };
+const TARIFF_TITLE = { basic: 'Базовый', premium: 'Премиум', vip: 'VIP' };
 const TBANK_INIT_URL = 'https://securepay.tinkoff.ru/v2/Init';
 
 function siteUrl(req) {
@@ -42,6 +44,8 @@ module.exports = async (req, res) => {
     res.status(400).json({ error: 'Заполните обязательные поля' }); return;
   }
 
+  const tariff = TARIFF_KOPECKS[order.tariff] ? order.tariff : 'premium';
+  const amount = TARIFF_KOPECKS[tariff];
   const orderId = randomUUID();
 
   // 1. Записываем заказ как pending
@@ -50,9 +54,11 @@ module.exports = async (req, res) => {
     const { error } = await sb.from('orders').insert({
       id: orderId,
       product: 'gender',
+      tariff,
       baby_gender: order.baby_gender,
       voice_type: order.voice_type,
-      scenario: [order.scenario, order.script].filter(Boolean).join(' — '),
+      scenario: [order.scenario, order.script, order.survey ? ('Анкета: ' + order.survey) : '']
+        .filter(Boolean).join(' — '),
       parent_names: order.parent_names,
       party_date: order.party_date,
       email,
@@ -68,9 +74,9 @@ module.exports = async (req, res) => {
   const base = siteUrl(req);
   const initParams = {
     TerminalKey: terminalKey,
-    Amount: PRICE_KOPECKS,
+    Amount: amount,
     OrderId: orderId,
-    Description: 'Голос для гендер-пати',
+    Description: `Голос для гендер-пати — тариф ${TARIFF_TITLE[tariff]}`,
     SuccessURL: `${base}/success?orderId=${orderId}`,
     FailURL: `${base}/order/gender?payment=fail`,
     NotificationURL: `${base}/api/payment-callback`,

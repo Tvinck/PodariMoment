@@ -872,6 +872,24 @@ body.legal-open{overflow:hidden}
 @keyframes accProg{0%{width:4%}100%{width:90%}}
 .acc-progress-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;opacity:0.7;flex-wrap:wrap}
 @media (prefers-reduced-motion: reduce){.s-processing{animation:none}.acc-progress-bar{animation:none;width:60%}}
+
+/* === ТАРИФЫ === */
+.tariffs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;align-items:stretch}
+@media (max-width:720px){.tariffs{grid-template-columns:1fr}}
+.tariff-card{position:relative;text-align:left;padding:20px;border-radius:18px;background:var(--card);border:1.5px solid var(--line);cursor:pointer;transition:all .25s var(--spring);color:#fff;display:flex;flex-direction:column;gap:10px;font:inherit}
+.tariff-card:hover{border-color:rgba(255,255,255,0.25);transform:translateY(-3px)}
+.tariff-card.act{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,0.2)}
+.tariff-card[data-tariff="premium"]{background:linear-gradient(180deg,#221c14,#15131f)}
+.tariff-card[data-tariff="premium"].act{box-shadow:0 0 0 3px rgba(255,107,53,0.3),0 16px 40px rgba(255,107,53,0.18)}
+@media (min-width:721px){.tariff-card[data-tariff="premium"]{transform:scale(1.04)}.tariff-card[data-tariff="premium"]:hover{transform:scale(1.04) translateY(-3px)}}
+.tariff-badge{position:absolute;top:-10px;right:14px;padding:4px 12px;border-radius:999px;background:var(--grad);color:#1a0d05;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase}
+.tariff-name{font-size:13px;font-weight:700;letter-spacing:0.02em;opacity:0.8}
+.tariff-price{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tariff-card[data-tariff="vip"] .tariff-price{background:linear-gradient(135deg,#ffd166,#ffe199);-webkit-background-clip:text;background-clip:text}
+.tariff-feat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tariff-feat li{font-size:12px;line-height:1.4;opacity:0.7;padding-left:18px;position:relative}
+.tariff-feat li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:800}
+.tariff-card[data-tariff="vip"] .tariff-feat li::before{color:#ffd166}
 </style>
 </head>
 <body>
@@ -1114,7 +1132,7 @@ body.legal-open{overflow:hidden}
           </div>
         </div>
         <div id="prod-fields"></div>
-        <div class="order-foot"><div class="order-total"><div class="kicker">Итого</div><div class="order-price"><span id="op">299</span> ₽<small>с НДС</small></div></div><button class="cta" type="submit">Оплатить →</button></div>
+        <div class="order-foot"><div class="order-total"><div class="kicker">Итого</div><div class="order-price"><span id="op">599</span> ₽<small>с НДС</small></div></div><button class="cta" type="submit" id="gender-pay-btn">Оплатить →</button></div>
       </form>
     </section>
   </div>
@@ -1254,7 +1272,7 @@ function styleGrid(group, items, idx=0){
 function voiceChips(group, items, idx=0){
   const playIcon = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   return `<div class="voice-chips" data-group="${group}" role="radiogroup" aria-label="Голос объявляющего">${items.map((it,i)=>`
-    <button type="button" class="voice-chip${i===idx?' act':''}" data-vid="${it.id}" data-freq="${it.freq}" data-wtype="${it.type||'sine'}"${it.add?` data-add="${it.add}"`:''} role="radio" aria-checked="${i===idx?'true':'false'}" aria-label="Голос: ${it.label}${it.add?', '+it.add:''}. Нажмите для прослушивания.">
+    <button type="button" class="voice-chip${i===idx?' act':''}${it.extra?' voice-extra':''}" data-vid="${it.id}" data-freq="${it.freq}" data-wtype="${it.type||'sine'}"${it.extra?' data-extra="1"':''}${it.add?` data-add="${it.add}"`:''} role="radio" aria-checked="${i===idx?'true':'false'}" aria-label="Голос: ${it.label}${it.add?', '+it.add:''}. Нажмите для прослушивания.">
       <span class="vc-play" aria-hidden="true">${playIcon}</span>
       <span class="vc-label">${it.emoji} ${it.label}${it.add?` <small>${it.add}</small>`:''}</span>
       <span class="vc-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
@@ -1574,6 +1592,40 @@ const FORMS = {
       <audio id="demo-audio" preload="none" src="/demo/gender-voice-demo.mp3"></audio>
     </div>
 
+    <div class="tariffs" id="gtariffs" data-group="gtariff">
+      <button type="button" class="tariff-card" data-tariff="basic">
+        <div class="tariff-name">Базовый</div>
+        <div class="tariff-price">399 ₽</div>
+        <ul class="tariff-feat">
+          <li>Шаблонный текст, 4 сценария</li>
+          <li>1 голос на выбор</li>
+          <li>~45 секунд · MP3</li>
+          <li>Доставка за 5 минут</li>
+        </ul>
+      </button>
+      <button type="button" class="tariff-card act" data-tariff="premium">
+        <div class="tariff-badge">Хит</div>
+        <div class="tariff-name">Премиум</div>
+        <div class="tariff-price">599 ₽</div>
+        <ul class="tariff-feat">
+          <li>Персонализированный текст</li>
+          <li>5 голосов (вкл. Торжественный, Мягкий)</li>
+          <li>~90 секунд · MP3 + WAV</li>
+          <li>Фоновая музыка</li>
+        </ul>
+      </button>
+      <button type="button" class="tariff-card" data-tariff="vip">
+        <div class="tariff-name">VIP</div>
+        <div class="tariff-price">999 ₽</div>
+        <ul class="tariff-feat">
+          <li>Уникальный текст (GPT по анкете)</li>
+          <li>Все голоса + экспрессивный v3</li>
+          <li>до 3 минут · MP3 + WAV + видео-открытка</li>
+          <li>Приоритетная генерация</li>
+        </ul>
+      </button>
+    </div>
+
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">1</div>
@@ -1597,9 +1649,11 @@ const FORMS = {
       ${voiceChips('gvoice',[
         {id:'male',label:'Мужской',emoji:'👨',freq:160,type:'sine'},
         {id:'female',label:'Женский',emoji:'👩',freq:240,type:'sine'},
-        {id:'child',label:'Детский',emoji:'🧒',freq:340,type:'triangle'}
+        {id:'child',label:'Детский',emoji:'🧒',freq:340,type:'triangle'},
+        {id:'solemn',label:'Торжественный',emoji:'🎩',freq:130,type:'sawtooth',extra:true},
+        {id:'soft',label:'Мягкий',emoji:'🌸',freq:280,type:'sine',extra:true}
       ], 0)}
-      <div class="field-help">Превью отражает тембр голоса. Финальный файл будет студийного качества.</div>
+      <div class="field-help" id="gvoice-help">Превью отражает тембр голоса. Финальный файл будет студийного качества.</div>
     </div>
 
     <div class="form-step">
@@ -1625,6 +1679,18 @@ const FORMS = {
           <button type="button" class="script-tmpl" data-tmpl="soul">🥹 Душевно</button>
           <button type="button" class="script-tmpl" data-tmpl="quiet">✨ Загадочно</button>
         </div>
+      </div>
+    </div>
+
+    <div class="form-step" id="gstep-survey" style="display:none">
+      <div class="form-step-head">
+        <div class="form-step-num">★</div>
+        <div class="form-step-title">Анкета для VIP</div>
+        <div class="form-step-hint">GPT напишет уникальный текст</div>
+      </div>
+      <div class="field"><label>Расскажите о семье</label>
+        <textarea class="input" id="gsurvey" rows="4" placeholder="Как познакомились, сколько ждали малыша, общие шутки, мечты, имена старших детей, питомцы — всё, что сделает текст по-настоящему вашим."></textarea>
+        <div class="field-help">Чем больше деталей — тем личнее получится анонс.</div>
       </div>
     </div>
 
@@ -2432,12 +2498,40 @@ function syncRevealStage(){
   }
 }
 
+const TARIFFS = {
+  basic:   {price:399, label:'Базовый'},
+  premium: {price:599, label:'Премиум'},
+  vip:     {price:999, label:'VIP'}
+};
+function currentTariff(){
+  const c = document.querySelector('.tariff-card.act');
+  return (c && c.dataset.tariff) || 'premium';
+}
+function applyTariff(){
+  const t = currentTariff();
+  const extras = document.querySelectorAll('.voice-chip.voice-extra');
+  extras.forEach(el=>{ el.style.display = (t==='basic') ? 'none' : ''; });
+  if(t==='basic'){
+    const act = document.querySelector('.voice-chip.act');
+    if(act && act.dataset.extra){
+      document.querySelectorAll('.voice-chip').forEach(c=>{c.classList.remove('act');c.setAttribute('aria-checked','false');});
+      const first = document.querySelector('.voice-chip[data-vid="male"]');
+      if(first){ first.classList.add('act'); first.setAttribute('aria-checked','true'); }
+    }
+  }
+  const survey = document.getElementById('gstep-survey');
+  if(survey) survey.style.display = (t==='vip') ? '' : 'none';
+}
 function recalcGenderPrice(){
+  const t = currentTariff();
+  const price = (TARIFFS[t]||TARIFFS.premium).price;
   const sum = document.getElementById('gprice-sum');
   const addEl = document.getElementById('gprice-add');
-  if(!sum) return;
-  sum.textContent = '599 ₽';
-  if(addEl) addEl.textContent = 'базовый пакет';
+  if(sum) sum.textContent = price + ' ₽';
+  if(addEl) addEl.textContent = 'тариф «' + (TARIFFS[t]||{}).label + '»';
+  const op = document.getElementById('op'); if(op) op.textContent = price;
+  const payBtn = document.getElementById('gender-pay-btn'); if(payBtn) payBtn.textContent = `Оплатить ${price} ₽ →`;
+  const heroPrice = document.querySelector('.order-hero-priceval'); if(heroPrice) heroPrice.textContent = price + ' ₽';
 }
 
 // Demo audio player
@@ -2459,12 +2553,21 @@ function initDemoPlayer(){
 }
 
 function initGenderForm(){
+  applyTariff();
   syncRevealStage();
   recalcGenderPrice();
   initDemoPlayer();
 }
 
 document.addEventListener('click', e=>{
+  const tcard = e.target.closest('.tariff-card');
+  if(tcard){
+    e.preventDefault();
+    document.querySelectorAll('.tariff-card').forEach(c=>c.classList.remove('act'));
+    tcard.classList.add('act');
+    applyTariff(); recalcGenderPrice();
+    return;
+  }
   const vc = e.target.closest('.voice-chip');
   if(vc){
     e.preventDefault();
@@ -2771,6 +2874,10 @@ function validateGender(){
   if(email && email.value.trim() && !email.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)){
     markError(email,'Похоже, в адресе опечатка'); ok=false; firstBad=firstBad||email;
   }
+  if(currentTariff()==='vip'){
+    const survey = document.getElementById('gsurvey');
+    if(survey && !survey.value.trim()){ markError(survey,'Для VIP заполните анкету о семье'); ok=false; firstBad=firstBad||survey; }
+  }
   if(!ok && firstBad){ firstBad.scrollIntoView({behavior:'smooth',block:'center'}); }
   return ok;
 }
@@ -2779,10 +2886,12 @@ function collectGenderOrder(){
   const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
   return {
     product: 'gender',
+    tariff: currentTariff(),
     baby_gender: reveal ? reveal.dataset.rv : '',
     voice_type: voice ? voice.dataset.vid : '',
     scenario: (document.getElementById('gscenario')||{}).value || '',
     script: (document.getElementById('gscript')||{}).value || '',
+    survey: (document.getElementById('gsurvey')||{}).value || '',
     parent_names: (document.getElementById('gparents')||{}).value || '',
     party_date: (document.getElementById('gdate')||{}).value || '',
     email: (document.getElementById('gemail')||{}).value || '',

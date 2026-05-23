@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
 <base href="/">
+<script src="/env.js"></script>
 <title>ПодариМомент — подарки нового поколения</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
@@ -806,6 +807,26 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 @keyframes demoWave{0%,100%{height:25%}50%{height:90%}}
 .demo-time{font-size:12px;font-weight:600;opacity:0.55;font-variant-numeric:tabular-nums;flex-shrink:0}
 @media (prefers-reduced-motion: reduce){.demo-player.playing .demo-wave i{animation:none}}
+
+/* === LEGAL MODALS (оферта/политика/возврат) === */
+.legal-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.legal-modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:lmFade .25s var(--ease)}
+@keyframes lmFade{from{opacity:0}to{opacity:1}}
+.legal-modal-card{position:relative;z-index:1;width:min(720px,100%);max-height:86vh;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:lmRise .35s var(--spring)}
+@keyframes lmRise{from{opacity:0;transform:translateY(24px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.legal-modal-x{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:all .2s var(--ease);z-index:2}
+.legal-modal-x:hover{background:rgba(255,255,255,0.14);transform:rotate(90deg)}
+.legal-modal-title{font-size:clamp(22px,3.5vw,30px);font-weight:800;letter-spacing:-0.03em;margin:0;padding:28px 28px 16px;padding-right:64px;border-bottom:1px solid var(--line);font-family:'nauryzRedKeds','Space Grotesk',sans-serif}
+.legal-modal-body{overflow-y:auto;padding:24px 28px 28px;font-size:14px;line-height:1.6;color:rgba(255,255,255,0.78)}
+.legal-modal-body h3{font-size:15px;font-weight:700;color:#fff;margin:22px 0 8px;letter-spacing:-0.01em}
+.legal-modal-body h3:first-child{margin-top:0}
+.legal-modal-body p{margin:0 0 10px}
+.legal-modal-body ul{margin:0 0 12px;padding-left:20px}
+.legal-modal-body li{margin-bottom:6px}
+.legal-modal-body a{color:var(--orange)}
+.legal-modal-body strong{color:rgba(255,255,255,0.92)}
+.legal-modal-body .lm-meta{font-size:12px;opacity:0.5;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+body.legal-open{overflow:hidden}
 </style>
 </head>
 <body>
@@ -1122,6 +1143,15 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
       </div>
     </div>
   </footer>
+</div>
+
+<div class="legal-modal" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title" style="display:none">
+  <div class="legal-modal-backdrop" data-legal-close></div>
+  <div class="legal-modal-card">
+    <button class="legal-modal-x" data-legal-close aria-label="Закрыть">×</button>
+    <h2 class="legal-modal-title" id="legal-modal-title"></h2>
+    <div class="legal-modal-body" id="legal-modal-body"></div>
+  </div>
 </div>
 
 <div class="dock" id="dock"></div>
@@ -2210,6 +2240,84 @@ document.addEventListener('change', e=>{
   if(e.target && e.target.id === 'gscenario'){ syncRevealStage(); }
 });
 
+// === LEGAL MODALS ===
+const LEGAL_DOCS = {
+  offer: {
+    title: 'Публичная оферта',
+    html: `
+      <p>Настоящий документ является официальным предложением (публичной офертой) <strong>ИП Кошелев Артём Николаевич</strong> (далее — Исполнитель) заключить договор на оказание услуг на условиях, изложенных ниже.</p>
+      <h3>1. Стороны</h3>
+      <p>Исполнитель: ИП Кошелев Артём Николаевич, ИНН [ВСТАВИТЬ_ИНН], ОГРНИП [ВСТАВИТЬ_ОГРНИП]. Заказчик — физическое лицо, оформившее заказ на сайте.</p>
+      <h3>2. Предмет договора</h3>
+      <p>Исполнитель оказывает услуги по созданию аудиоконтента, сгенерированного с использованием технологий искусственного интеллекта. Текущий продукт — <strong>«Голос для гендер-пати»</strong>: ИИ-генерация аудиофайла-анонса пола ребёнка по параметрам, указанным Заказчиком.</p>
+      <h3>3. Цена и оплата</h3>
+      <p>Стоимость услуги — <strong>599 ₽</strong>. Оплата производится единовременно, в полном объёме, через эквайринг АО «Т-Банк» (Tinkoff). Моментом оплаты считается подтверждение платежа банком.</p>
+      <h3>4. Срок исполнения и доставка</h3>
+      <p>Готовый файл предоставляется в течение <strong>24 часов</strong> с момента поступления оплаты. Доставка осуществляется на адрес электронной почты, указанный Заказчиком, в формате <strong>MP3</strong>. Ссылка на скачивание действует 30 дней.</p>
+      <h3>5. Возврат</h3>
+      <p>Возврат денежных средств возможен в течение <strong>24 часов</strong>, если файл не был доставлен или содержит технический брак. Подробнее — в разделе «Возврат и доставка».</p>
+      <h3>6. Права на результат</h3>
+      <p>Готовый файл предоставляется Заказчику для <strong>личного некоммерческого использования</strong>. Передача третьим лицам в коммерческих целях не допускается.</p>
+      <h3>7. Применимое право</h3>
+      <p>Отношения сторон регулируются законодательством Российской Федерации, в т.ч. Гражданским кодексом РФ. Акцептом оферты является оформление и оплата заказа.</p>
+      <p class="lm-meta">Связь: <a href="mailto:hello@podarimoment.ru">hello@podarimoment.ru</a></p>`
+  },
+  privacy: {
+    title: 'Политика конфиденциальности',
+    html: `
+      <p>Политика описывает обработку персональных данных в соответствии с Федеральным законом №152-ФЗ «О персональных данных».</p>
+      <h3>1. Какие данные мы собираем</h3>
+      <ul>
+        <li>адрес электронной почты;</li>
+        <li>имена родителей (для текста анонса);</li>
+        <li>дата праздника.</li>
+      </ul>
+      <h3>2. Цель обработки</h3>
+      <p>Данные используются исключительно для исполнения заказа и доставки готового файла Заказчику.</p>
+      <h3>3. Передача третьим лицам</h3>
+      <p>Мы не передаём данные третьим лицам, за исключением платёжного оператора <strong>АО «Т-Банк»</strong> в объёме, необходимом для проведения оплаты.</p>
+      <h3>4. Хранение</h3>
+      <p>Данные хранятся в защищённой базе <strong>Supabase</strong> (серверы в ЕС). Срок хранения — <strong>1 год</strong> с момента заказа, после чего данные удаляются.</p>
+      <h3>5. Права субъекта данных</h3>
+      <p>Вы вправе запросить удаление своих данных в любой момент, направив запрос на <a href="mailto:hello@podarimoment.ru">hello@podarimoment.ru</a>.</p>
+      <p class="lm-meta">Оформляя заказ, вы даёте согласие на обработку персональных данных на условиях настоящей Политики.</p>`
+  },
+  refund: {
+    title: 'Возврат и доставка',
+    html: `
+      <h3>Доставка</h3>
+      <p>Готовый файл (MP3) приходит на указанный email в течение <strong>24 часов</strong> после оплаты. Ссылка на скачивание действует 30 дней.</p>
+      <h3>Когда возврат возможен</h3>
+      <p>Полный возврат <strong>599 ₽</strong> в течение <strong>24 часов</strong>, если:</p>
+      <ul>
+        <li>файл не был доставлен в срок;</li>
+        <li>файл содержит технический брак (не воспроизводится, повреждён, не соответствует заказу).</li>
+      </ul>
+      <h3>Когда возврат невозможен</h3>
+      <p>Возврат не производится, если файл доставлен и воспроизводится корректно — услуга считается оказанной (цифровой товар).</p>
+      <h3>Процедура</h3>
+      <p>Напишите на <a href="mailto:hello@podarimoment.ru">hello@podarimoment.ru</a>, укажите <strong>номер заказа</strong> и причину. Мы ответим в течение рабочего дня.</p>
+      <h3>Срок возврата средств</h3>
+      <p>Деньги возвращаются на ту же карту через эквайринг Т-Банк в срок до <strong>10 рабочих дней</strong>.</p>`
+  }
+};
+function openLegalModal(type){
+  const doc = LEGAL_DOCS[type]; if(!doc) return;
+  const m = document.getElementById('legal-modal');
+  document.getElementById('legal-modal-title').textContent = doc.title;
+  document.getElementById('legal-modal-body').innerHTML = doc.html;
+  m.style.display = 'flex';
+  document.body.classList.add('legal-open');
+  m.querySelector('.legal-modal-x').focus();
+}
+function closeLegalModal(){
+  const m = document.getElementById('legal-modal');
+  if(m) m.style.display = 'none';
+  document.body.classList.remove('legal-open');
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeLegalModal(); });
+window.openLegalModal = openLegalModal; window.closeLegalModal = closeLegalModal;
+
 // === DOCK BUILD ===
 const DOCK_SVG = {
   home: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2v-9z" fill="currentColor"/></svg>',
@@ -2242,8 +2350,14 @@ function buildDock(){
 
 // === DELEGATED CLICK HANDLER ===
 document.addEventListener('click', e=>{
+  const legalClose = e.target.closest('[data-legal-close]');
+  if(legalClose){e.preventDefault();closeLegalModal();return;}
   const goEl = e.target.closest('[data-go]');
-  if(goEl){e.preventDefault();go(goEl.dataset.go);return;}
+  if(goEl){
+    e.preventDefault();
+    if(['offer','privacy','refund'].includes(goEl.dataset.go)){ openLegalModal(goEl.dataset.go); return; }
+    go(goEl.dataset.go);return;
+  }
   const prodEl = e.target.closest('[data-prod]');
   if(prodEl){e.preventDefault();
     // if it's a product tab inside order form, just switch

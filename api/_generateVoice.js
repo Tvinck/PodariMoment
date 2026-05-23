@@ -102,4 +102,21 @@ async function generateVoice(order) {
   return { task_id: String(taskId), text };
 }
 
-module.exports = { generateVoice, buildText, VOICE_IDS };
+// Скачивает MP3 по URL, кладёт в Supabase Storage, проставляет file_url + done.
+// Используется и в kie-callback, и в admin-check-status.
+async function storeAudioToOrder(order, audioUrl) {
+  const sb = getAdminClient();
+  const fileResp = await fetch(audioUrl);
+  if (!fileResp.ok) throw new Error(`Не удалось скачать аудио: ${fileResp.status}`);
+  const buf = Buffer.from(await fileResp.arrayBuffer());
+  const path = `orders/${order.id}/voice.mp3`;
+  const { error: upErr } = await sb.storage.from('order-files').upload(path, buf, {
+    contentType: 'audio/mpeg', upsert: true,
+  });
+  if (upErr) throw upErr;
+  const { data: pub } = sb.storage.from('order-files').getPublicUrl(path);
+  await sb.from('orders').update({ file_url: pub.publicUrl, payment_status: 'done', error_log: null }).eq('id', order.id);
+  return pub.publicUrl;
+}
+
+module.exports = { generateVoice, buildText, VOICE_IDS, storeAudioToOrder };

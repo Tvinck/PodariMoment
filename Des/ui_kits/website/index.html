@@ -890,6 +890,24 @@ body.legal-open{overflow:hidden}
 .tariff-feat li{font-size:12px;line-height:1.4;opacity:0.7;padding-left:18px;position:relative}
 .tariff-feat li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:800}
 .tariff-card[data-tariff="vip"] .tariff-feat li::before{color:#ffd166}
+
+/* === ТРЕКИНГ === */
+.track-wrap{max-width:560px;margin:0 auto}
+.track-head{text-align:center;margin-bottom:28px}
+.track-head h2{font-size:clamp(24px,4vw,34px);margin:6px 0 0}
+.track-timeline{position:relative;padding-left:8px}
+.tl-step{position:relative;display:flex;gap:16px;padding:0 0 26px 22px;border-left:2px solid var(--line)}
+.tl-step:last-child{border-left-color:transparent;padding-bottom:0}
+.tl-dot{position:absolute;left:-9px;top:0;width:16px;height:16px;border-radius:50%;background:#22222e;border:2px solid var(--line)}
+.tl-step.ok .tl-dot{background:#4ade80;border-color:#4ade80}
+.tl-step.ok{border-left-color:rgba(74,222,128,0.4)}
+.tl-step.active .tl-dot{background:var(--gold);border-color:var(--gold)}
+.tl-dot.pulse{animation:stPulse 1.4s ease-in-out infinite}
+.tl-title{font-size:15px;font-weight:700;letter-spacing:-0.01em}
+.tl-time{font-size:12px;opacity:0.55;margin-top:2px}
+.track-failed{text-align:center;margin-top:20px;padding:20px;border-radius:16px;background:rgba(255,84,112,0.08);border:1px solid rgba(255,84,112,0.25)}
+.track-failed p{margin:0 0 12px;opacity:0.8}
+.track-wrap .acc-download{margin-top:20px}
 </style>
 </head>
 <body>
@@ -1154,6 +1172,7 @@ body.legal-open{overflow:hidden}
   </div>
 
   <div id="view-account" style="display:none"></div>
+  <div id="view-track" style="display:none"></div>
   <div id="view-admin" style="display:none"></div>
 
   <footer class="site-footer">
@@ -1951,6 +1970,58 @@ function accForget(){
   document.getElementById('view-account').innerHTML = accEmailForm('');
 }
 window.accLoadByInput = accLoadByInput; window.accForget = accForget;
+
+// === ТРЕКИНГ ЗАКАЗА (/track?order=...) ===
+function trackOrderId(){ return new URLSearchParams(location.search).get('order') || ''; }
+function renderTrack(){
+  const view = document.getElementById('view-track');
+  const oid = trackOrderId();
+  if(!oid){
+    view.innerHTML = `<section class="section"><div class="reviews-empty"><div class="reviews-empty-icon">🔎</div><p class="reviews-empty-text">Не указан номер заказа. Откройте ссылку из письма или личного кабинета.</p><button class="cta" data-go="account">Открыть кабинет →</button></div></section>`;
+    return;
+  }
+  view.innerHTML = `<section class="section"><div class="track-wrap"><div class="acc-loading">Загружаем статус заказа…</div></div></section>`;
+  trackFetch(oid);
+}
+async function trackFetch(oid){
+  const wrap = document.querySelector('#view-track .track-wrap');
+  try{
+    const res = await fetch('/api/track-order?orderId='+encodeURIComponent(oid));
+    if(res.status===404){ if(wrap) wrap.innerHTML = `<div class="reviews-empty"><div class="reviews-empty-icon">🤷</div><p class="reviews-empty-text">Заказ не найден. Проверьте ссылку.</p></div>`; return; }
+    const d = await res.json();
+    if(!res.ok) throw new Error(d.error||'Ошибка');
+    if(wrap) wrap.innerHTML = trackHtml(d);
+  }catch(e){ if(wrap) wrap.innerHTML = `<div class="field-error-msg" style="text-align:center;padding:24px">Не удалось загрузить: ${e.message}</div>`; }
+}
+function trackHtml(d){
+  const fmt = iso => iso ? fmtDateTime(iso) : '';
+  const paid = d.status!=='pending' && d.status!=='failed';
+  const proc = d.status==='processing' || d.status==='paid';
+  const done = d.status==='done';
+  const failed = d.status==='generation_failed' || d.status==='failed';
+  const step = (active, ok, title, time, pulse) =>
+    `<div class="tl-step ${ok?'ok':''} ${active?'active':''}">
+      <div class="tl-dot ${pulse?'pulse':''}"></div>
+      <div class="tl-body"><div class="tl-title">${title}</div>${time?`<div class="tl-time">${time}</div>`:''}</div>
+    </div>`;
+  return `
+    <div class="track-head">
+      <div class="kicker">Отслеживание</div>
+      <h2>Ваш заказ <em>${d.orderId}</em></h2>
+    </div>
+    <div class="track-timeline">
+      ${step(false, true, 'Заказ создан', fmt(d.created_at))}
+      ${step(d.status==='paid', paid, 'Оплата получена', fmt(d.paid_at))}
+      ${step(proc, paid, proc?'Генерируется…':'Генерация', proc?'обычно 1–2 минуты':'', proc)}
+      ${step(false, done, 'Файл готов ✓', fmt(d.done_at))}
+    </div>
+    ${done && d.file_url ? `<a class="acc-download" href="${d.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать голос</a><div class="acc-download-meta">Формат MP3 · для личного использования</div>` : ''}
+    ${proc ? `<div class="acc-progress"><div class="acc-progress-bar"></div></div><div class="acc-progress-row"><span>Обычно занимает 1–2 минуты</span></div>` : ''}
+    ${failed ? `<div class="track-failed"><p>Что-то пошло не так при создании файла.</p><a class="cta" href="https://t.me/podarimoment" target="_blank" rel="noopener">Написать в поддержку</a></div>` : ''}
+    <div style="text-align:center;margin-top:18px"><button class="btn-ghost" type="button" onclick="renderTrack()">🔄 Обновить</button></div>`;
+}
+window.renderTrack = renderTrack;
+
 function accTab(el,pane){
   el.parentElement.querySelectorAll('.acc-tab').forEach(t=>t.classList.remove('act'));
   el.classList.add('act');
@@ -2320,12 +2391,18 @@ window.sendAdmMsg = sendAdmMsg; window.sendCliMsg = sendCliMsg;
 })();
 
 // ROUTING
-const VIEWS = ['landing','order','success','admin','catalog','account'];
+const VIEWS = ['landing','order','success','admin','catalog','account','track'];
 function viewToPath(v, prod){
   if(v==='landing') return '/';
   if(v==='order' && prod) return '/order/'+prod;
+  if(v==='track') return '/track' + (location.search || '');
   return '/'+v;
 }
+function goTrack(orderId){
+  history.pushState({view:'track'}, '', '/track?order='+encodeURIComponent(orderId));
+  go('track', {skipHistory:true, skipScroll:true});
+}
+window.goTrack = goTrack;
 function pathToRoute(path){
   const p = (path || '/').replace(/\/+$/,'') || '/';
   if(p==='/' || p==='') return {view:'landing'};
@@ -2341,6 +2418,7 @@ function go(v, opts){
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
   if(v==='admin' && typeof renderAdmin==='function') renderAdmin();
   if(v==='account' && typeof renderAccount==='function') renderAccount();
+  if(v==='track' && typeof renderTrack==='function') renderTrack();
   if(v==='success') burstConfetti();
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');

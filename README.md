@@ -87,15 +87,40 @@ Preview-деплой создаётся автоматически на кажд
 
 ---
 
+## Бэкенд: оплата и заказы
+
+### Serverless-функции (`/api/`)
+- `POST /api/payment-init` — создаёт заказ в Supabase (`pending`), инициализирует
+  оплату через Т-Банк (Tinkoff `Init`), возвращает `{ paymentUrl }`.
+- `POST /api/payment-callback` — уведомление Т-Банк: проверяет SHA-256 токен,
+  обновляет `payment_status` (`paid`/`failed`), отвечает `OK`.
+
+### Supabase
+1. Создать проект на supabase.com.
+2. Применить миграцию `supabase/migrations/0001_create_orders.sql`
+   (SQL Editor или `supabase db push`).
+3. Скопировать URL, anon key и service_role key в env.
+
+### Т-Банк (Tinkoff) эквайринг
+1. Подключить Т-Кассу: https://www.tinkoff.ru/kassa/
+2. Взять Terminal Key и Password → `TBANK_TERMINAL_KEY`, `TBANK_PASSWORD`.
+3. В ЛК указать NotificationURL `https://<домен>/api/payment-callback`.
+4. Цена фиксирована: 599 ₽ (59900 копеек) в `api/payment-init.js`.
+
+Обязательные env для оплаты: `TBANK_TERMINAL_KEY`, `TBANK_PASSWORD`,
+`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SITE_URL`.
+
 ## Roadmap
 
 - [x] Дизайн-система v1
-- [x] UI-кит SPA (10 продуктов)
-- [x] Гендер-пати: voice-preview, Reveal Stage, шаблоны сценариев
+- [x] UI-кит SPA
+- [x] Гендер-пати: voice-preview, Reveal Stage, шаблоны сценариев, демо-плеер
 - [x] History API роутинг
 - [x] Vercel-конфиг
-- [ ] Интеграция TTS (ElevenLabs / Yandex SpeechKit)
-- [ ] Платёжный шлюз (ЮKassa)
+- [x] Лендинг сфокусирован на гендер-пати (599 ₽)
+- [x] Оплата через Т-Банк + заказы в Supabase
+- [ ] Интеграция TTS (ElevenLabs / Yandex SpeechKit) → генерация файла
 - [ ] Email-доставка готовых файлов (Resend)
+- [ ] Реальные демо-голоса вместо placeholder MP3
 - [ ] Real auth для админки
-- [ ] CMS для каталога работ
+- [ ] Страницы оферты / политики / возврата (роуты offer/privacy/refund)

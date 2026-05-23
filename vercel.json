@@ -5,6 +5,9 @@
   "framework": null,
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    { "path": "/api/cron-check-orders", "schedule": "*/15 * * * *" }
+  ],
   "rewrites": [
     { "source": "/order/:product", "destination": "/index.html" },
     { "source": "/order", "destination": "/index.html" },

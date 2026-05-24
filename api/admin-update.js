@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
     patch.file_url = body.file_url || null;
     if (body.file_url) patch.payment_status = patch.payment_status || 'done';
   }
+  if (body.admin_note !== undefined) patch.admin_note = body.admin_note;
   if (Object.keys(patch).length === 0) { res.status(400).json({ error: 'Нечего обновлять' }); return; }
 
   try {

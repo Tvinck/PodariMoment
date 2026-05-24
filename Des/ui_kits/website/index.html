@@ -2317,6 +2317,39 @@ const VOICE_LABEL = {male:'Мужской', female:'Женский', child:'Де
 function adminPwd(){ try{ return sessionStorage.getItem('pm_admin_pwd')||''; }catch(_){ return ''; } }
 let adminSection = 'orders';
 let crmLeads = [];
+let adminPollTimer = null;
+let adminSeenPaid = null; // Set id оплаченных заказов, известных на момент входа
+/**
+ * @function adminStartPolling
+ * @description Запрашивает разрешение на уведомления и раз в 60с опрашивает
+ *              заказы; на новый оплаченный заказ шлёт Notification.
+ */
+function adminStartPolling(){
+  if(adminPollTimer) return;
+  if('Notification' in window && Notification.permission==='default'){ try{ Notification.requestPermission(); }catch(_){} }
+  adminPollTimer = setInterval(async ()=>{
+    try{
+      const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})});
+      if(!res.ok) return;
+      const data = await res.json();
+      const orders = data.orders||[];
+      const paidNow = orders.filter(o=>['paid','processing','done'].includes(o.payment_status));
+      if(adminSeenPaid){
+        paidNow.forEach(o=>{
+          if(!adminSeenPaid.has(o.id)){
+            adminSeenPaid.add(o.id);
+            if('Notification' in window && Notification.permission==='granted'){
+              new Notification('Новый заказ! 🎀', { body:`#PM-${String(o.id).slice(0,8)} на ${ADMIN_PRICE} ₽` });
+            }
+          }
+        });
+      }
+      adminOrders = orders;
+      if(adminSection==='orders'){ const box=document.getElementById('admin-orders-table'); if(box) box.innerHTML=renderAdminOrdersTable(); }
+    }catch(_){}
+  }, 60000);
+}
+function adminStopPolling(){ if(adminPollTimer){ clearInterval(adminPollTimer); adminPollTimer=null; } adminSeenPaid=null; }
 const CRM_STAGES = [
   {id:'new',        label:'Новые',     ico:'🆕', cls:'cs-new'},
   {id:'contacted',  label:'Связались', ico:'📞', cls:'cs-contacted'},
@@ -2544,7 +2577,7 @@ async function adminLogin(){
     renderAdmin();
   }catch(e){ fail('Сервис недоступен: '+e.message); }
 }
-function adminLogout(){ try{ sessionStorage.removeItem('pm_admin_pwd'); }catch(_){} renderAdmin(); }
+function adminLogout(){ adminStopPolling(); try{ sessionStorage.removeItem('pm_admin_pwd'); }catch(_){} renderAdmin(); }
 /**
  * @function adminFetchOrders
  * @description Загружает все заказы (POST /api/admin-orders с паролем) в
@@ -2558,7 +2591,9 @@ async function adminFetchOrders(){
     const data = await res.json();
     if(!res.ok) throw new Error(data.error||'Ошибка');
     adminOrders = data.orders||[];
+    if(adminSeenPaid===null){ adminSeenPaid = new Set(adminOrders.filter(o=>['paid','processing','done'].includes(o.payment_status)).map(o=>o.id)); }
     renderAdminPanel();
+    adminStartPolling();
   }catch(e){
     const shell = document.getElementById('admin-shell');
     if(shell) shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить: ${e.message}</div>`;
@@ -2681,6 +2716,9 @@ function openOrderDrawer(id){
       <div class="drw-sub">Сценарий</div>
       <div class="drw-script">${o.scenario||'—'}</div>
       ${o.file_url?`<a class="ord-dl" href="${o.file_url}" target="_blank" rel="noopener" style="margin-top:12px;display:inline-block">⬇️ Файл</a>`:''}
+      <div class="drw-sub">Заметка для себя</div>
+      <textarea class="input admin-modal-input drw-note" id="drw-note" rows="3" placeholder="Заметка для себя…" oninput="adminNoteInput('${o.id}', this.value)">${o.admin_note||''}</textarea>
+      <div class="drw-note-status" id="drw-note-status"></div>
       <div class="drw-sub">История</div>
       <div class="drw-history">${hist||'<div style="opacity:0.4;font-size:13px">—</div>'}</div>
       ${o.error_log?`<div class="drw-sub">Ошибка</div><div class="drw-err">${o.error_log}</div>`:''}
@@ -2692,7 +2730,26 @@ function adminCardClick(e, id){
   if(e.target.closest('button, select, a')) return; // клик по элементу управления — не открываем
   openOrderDrawer(id);
 }
-window.openOrderDrawer=openOrderDrawer; window.closeOrderDrawer=closeOrderDrawer; window.adminCardClick=adminCardClick;
+let adminNoteTimer = null;
+/**
+ * @function adminNoteInput
+ * @description Автосохранение заметки к заказу с debounce 1с (PATCH admin_note).
+ * @param {string} id — uuid заказа
+ * @param {string} val — текст заметки
+ */
+function adminNoteInput(id, val){
+  const status = document.getElementById('drw-note-status');
+  if(status) status.textContent = 'Сохранение…';
+  if(adminNoteTimer) clearTimeout(adminNoteTimer);
+  adminNoteTimer = setTimeout(async ()=>{
+    try{
+      await adminPatch(id, {admin_note: val});
+      const o = adminOrders.find(x=>x.id===id); if(o) o.admin_note = val;
+      if(status){ status.textContent = '✓ Сохранено'; setTimeout(()=>{ if(status) status.textContent=''; }, 1500); }
+    }catch(e){ if(status) status.textContent = 'Ошибка сохранения'; }
+  }, 1000);
+}
+window.openOrderDrawer=openOrderDrawer; window.closeOrderDrawer=closeOrderDrawer; window.adminCardClick=adminCardClick; window.adminNoteInput=adminNoteInput;
 function renderAdminOrdersTable(){
   const full = adminFilteredOrders();
   if(full.length===0) return '<div class="admin-empty">Заказов нет</div>';

@@ -1110,6 +1110,9 @@ body.legal-open{overflow:hidden}
 .switch input:checked + .switch-track::before{transform:translateX(20px);background:var(--orange)}
 .vtest-wait{font-size:13px;opacity:0.6;margin-top:10px}
 @media (max-width:640px){.voice-sliders{grid-template-columns:1fr}}
+/* === ЦЕНЫ === */
+.price-field{margin-top:8px}
+.price-field label{display:block;font-size:11px;opacity:0.55;margin-bottom:4px}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -2635,7 +2638,89 @@ async function voiceTest(voiceKey, btn){
   finally{ btn.disabled=false; btn.textContent=orig; }
 }
 window.voiceEdit=voiceEdit; window.voiceSave=voiceSave; window.voiceTest=voiceTest;
-async function renderPricing(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Цены…</div>'; }
+let pricingRows = [], promoRows = [];
+/**
+ * @function renderPricing
+ * @description Вкладка «Цены и акции»: редактирование тарифов + промокоды.
+ */
+async function renderPricing(){
+  const shell = document.getElementById('admin-shell'); if(!shell) return;
+  try{
+    const [p, pr] = await Promise.all([
+      apiFetch('/api/admin-pricing?password='+encodeURIComponent(adminPwd())),
+      apiFetch('/api/admin-promo?password='+encodeURIComponent(adminPwd()))
+    ]);
+    pricingRows = p.pricing||[]; promoRows = pr.promos||[];
+    const cards = ['basic','premium','vip'].map(t=>{
+      const row = pricingRows.find(x=>x.tariff===t) || {tariff:t,price:0};
+      return `<div class="fin-tcard" id="pc-${row.id||t}">
+        <div class="fin-tname">${TARIFF_NAME_C[t]}</div>
+        <div class="price-field"><label>Цена ₽</label><input class="input admin-modal-input" type="number" value="${row.price||''}" id="pp-${t}"></div>
+        <div class="price-field"><label>Старая цена</label><input class="input admin-modal-input" type="number" value="${row.old_price||''}" id="po-${t}"></div>
+        <div class="price-field"><label>Бейдж</label><input class="input admin-modal-input" value="${row.badge||''}" id="pb-${t}" placeholder="Хит / -20%"></div>
+        <label class="switch" style="margin-top:8px"><input type="checkbox" ${row.is_active!==false?'checked':''} id="pa-${t}"><span class="switch-track"></span></label>
+        <button class="cta" type="button" style="margin-top:10px;width:100%;justify-content:center" onclick="pricingSave('${t}','${row.id||''}')">Сохранить</button>
+      </div>`;
+    }).join('');
+    const promoTable = promoRows.length ? `<div class="aord-list">${promoRows.map(promoRow).join('')}</div>` : '<div class="admin-empty">Промокодов нет</div>';
+    shell.innerHTML = `
+      <div class="crm-toolbar"><h2 class="crm-title">Цены</h2></div>
+      <div class="fin-tariffs">${cards}</div>
+      <div class="crm-toolbar" style="margin-top:24px"><h2 class="crm-title">Промокоды</h2><button class="cta" type="button" onclick="promoModal()">+ Создать</button></div>
+      ${promoTable}`;
+  }catch(e){ if(e.status===401){adminLogout();return;} shell.innerHTML=`<div class="field-error-msg" style="padding:24px;text-align:center">Ошибка: ${e.message}</div>`; }
+}
+function promoRow(p){
+  const disc = p.discount_type==='percent' ? p.discount_value+'%' : p.discount_value+' ₽';
+  const until = p.valid_until ? fmtDateTime(p.valid_until).slice(0,10) : '∞';
+  const uses = (p.max_uses&&p.max_uses>0) ? `${p.uses_count}/${p.max_uses}` : `${p.uses_count}/∞`;
+  return `<div class="aord" style="grid-template-columns:1.2fr 1fr 1fr 1fr 1fr auto">
+    <div><b style="font-family:'JetBrains Mono',monospace">${p.code}</b></div>
+    <div style="font-size:13px;opacity:0.7">${p.discount_type==='percent'?'Процент':'Фикс'}</div>
+    <div style="font-size:13px"><b>${disc}</b></div>
+    <div style="font-size:13px;opacity:0.7">${uses}</div>
+    <div style="font-size:13px;opacity:0.7">${until}</div>
+    <div class="aord-actions">
+      <button class="aord-btn" title="${p.is_active?'Деактивировать':'Активировать'}" onclick="promoToggle('${p.id}',${!p.is_active})">${p.is_active?'🟢':'⚪'}</button>
+    </div>
+  </div>`;
+}
+async function pricingSave(t, id){
+  const num = i => { const v=(document.getElementById(i)||{}).value; return v===''?null:parseInt(v,10); };
+  const payload = { password:adminPwd(), id, price:num('pp-'+t), old_price:num('po-'+t), badge:(document.getElementById('pb-'+t)||{}).value||'', is_active:(document.getElementById('pa-'+t)||{}).checked };
+  if(!id){ showToast('Тариф не найден в базе (примените миграцию 0008)','error'); return; }
+  try{
+    await apiFetch('/api/admin-pricing',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    showToast('Цена сохранена','success');
+  }catch(e){ showToast('Ошибка: '+e.message,'error'); }
+}
+function promoModal(){
+  const m=document.getElementById('legal-modal');
+  document.getElementById('legal-modal-title').textContent='+ Новый промокод';
+  document.getElementById('legal-modal-body').innerHTML=`
+    <div class="field"><label>Код</label><div style="display:flex;gap:8px"><input class="input admin-modal-input" id="pm-code" style="flex:1;text-transform:uppercase"><button class="btn-ghost" type="button" onclick="document.getElementById('pm-code').value=Math.random().toString(36).slice(2,10).toUpperCase()">🎲</button></div></div>
+    <div class="field" style="margin-top:12px"><label>Тип скидки</label><select class="input admin-modal-input" id="pm-type"><option value="percent">Процент %</option><option value="fixed">Фиксированная ₽</option></select></div>
+    <div class="field" style="margin-top:12px"><label>Размер скидки</label><input class="input admin-modal-input" type="number" id="pm-val" value="10"></div>
+    <div class="field" style="margin-top:12px"><label>Макс. использований (0 = безлимит)</label><input class="input admin-modal-input" type="number" id="pm-max" value="1"></div>
+    <div class="field" style="margin-top:12px"><label>Срок действия</label><input class="input admin-modal-input" type="date" id="pm-until"></div>
+    <div class="field" style="margin-top:12px"><label>Описание</label><input class="input admin-modal-input" id="pm-desc" placeholder="для себя"></div>
+    <div class="field-error-msg" id="pm-err" style="display:none"></div>
+    <div class="admin-modal-actions"><button class="cta" type="button" onclick="promoCreate()">Создать</button><button class="btn-ghost" type="button" onclick="closeLegalModal()">Отмена</button></div>`;
+  m.style.display='flex'; document.body.classList.add('legal-open');
+}
+async function promoCreate(){
+  const err=document.getElementById('pm-err');
+  const payload={ password:adminPwd(), code:(document.getElementById('pm-code')||{}).value, discount_type:(document.getElementById('pm-type')||{}).value, discount_value:(document.getElementById('pm-val')||{}).value, max_uses:(document.getElementById('pm-max')||{}).value, valid_until:(document.getElementById('pm-until')||{}).value||null, description:(document.getElementById('pm-desc')||{}).value };
+  try{
+    await apiFetch('/api/admin-promo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    closeLegalModal(); showToast('Промокод создан','success'); renderPricing();
+  }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
+}
+async function promoToggle(id, active){
+  try{ await apiFetch('/api/admin-promo',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), id, is_active:active})}); renderPricing(); }
+  catch(e){ showToast('Ошибка: '+e.message,'error'); }
+}
+window.pricingSave=pricingSave; window.promoModal=promoModal; window.promoCreate=promoCreate; window.promoToggle=promoToggle;
 async function renderKie(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Kie.ai…</div>'; }
 window.renderFinance=renderFinance; window.renderPrompts=renderPrompts; window.renderVoices=renderVoices; window.renderPricing=renderPricing; window.renderKie=renderKie;
 

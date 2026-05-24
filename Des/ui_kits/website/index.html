@@ -468,6 +468,7 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .footer-legal-row a{color:rgba(255,255,255,0.6);cursor:pointer;text-decoration:none}
 .footer-legal-row a:hover{color:var(--orange)}
 @media (max-width:520px){.footer-legal{flex-direction:column}.footer-legal-block.right{text-align:left;align-items:flex-start}}
+.footer-trust{text-align:center;padding:16px 0 4px;font-size:11px;opacity:0.4;letter-spacing:0.02em}
 
 /* === FAQ === */
 .faq-list{display:flex;flex-direction:column;gap:10px}
@@ -1558,7 +1559,9 @@ body.admin-view .tg-fab{display:none}
         <a data-go="account">Личный кабинет</a>
       </div>
       <div class="footer-col">
-        <div class="footer-col-title">Документы</div>
+        <div class="footer-col-title">Информация</div>
+        <a data-go="faq">Вопросы и ответы</a>
+        <a data-go="about">О нас</a>
         <a data-go="offer">Оферта</a>
         <a data-go="privacy">Политика конфиденциальности</a>
         <a data-go="refund">Возврат и доставка</a>
@@ -1578,10 +1581,11 @@ body.admin-view .tg-fab{display:none}
         <div class="footer-legal-row">Юр. адрес: Россия</div>
       </div>
       <div class="footer-legal-block right">
-        <div class="footer-legal-row"><a data-go="offer">Оферта</a> · <a data-go="privacy">Политика</a> · <a data-go="refund">Возврат</a></div>
+        <div class="footer-legal-row"><a data-go="faq">FAQ</a> · <a data-go="about">О нас</a> · <a data-go="offer">Оферта</a> · <a data-go="privacy">Политика</a> · <a data-go="refund">Возврат</a></div>
         <div class="footer-legal-row">© 2026 ПодариМомент. Все права защищены.</div>
       </div>
     </div>
+    <div class="footer-trust">🛡 Оплата защищена · 🔒 Т-Банк эквайринг · 152-ФЗ · ИП Кошелев А.Н.</div>
   </footer>
 </div>
 

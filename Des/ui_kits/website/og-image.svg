@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="og-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff6b35"/><stop offset="100%" stop-color="#ffd166"/>
+    </linearGradient>
+    <radialGradient id="og-glow1" cx="0.2" cy="0.3" r="0.6">
+      <stop offset="0%" stop-color="rgba(111,182,255,0.35)"/><stop offset="100%" stop-color="rgba(111,182,255,0)"/>
+    </radialGradient>
+    <radialGradient id="og-glow2" cx="0.85" cy="0.75" r="0.6">
+      <stop offset="0%" stop-color="rgba(255,143,180,0.35)"/><stop offset="100%" stop-color="rgba(255,143,180,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0a0a0f"/>
+  <rect width="1200" height="630" fill="url(#og-glow1)"/>
+  <rect width="1200" height="630" fill="url(#og-glow2)"/>
+  <text x="90" y="250" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="rgba(255,255,255,0.55)">🎀 ПодариМомент</text>
+  <text x="86" y="360" font-family="Arial, sans-serif" font-size="92" font-weight="800" fill="url(#og-grad)">Голос для гендер-пати</text>
+  <text x="90" y="440" font-family="Arial, sans-serif" font-size="40" fill="rgba(255,255,255,0.8)">ИИ раскроет пол малыша за 5 минут</text>
+  <text x="90" y="540" font-family="Arial, sans-serif" font-size="48" font-weight="700" fill="#ffffff">💙 💗 &#8201; от 399 ₽</text>
+</svg>

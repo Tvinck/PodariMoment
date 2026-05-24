@@ -1093,6 +1093,23 @@ body.legal-open{overflow:hidden}
 .prompt-hl-label{font-size:11px;opacity:0.4;margin:12px 0 4px;text-transform:uppercase;letter-spacing:0.14em}
 .prompt-hl{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:14px;line-height:1.6}
 .prompt-preview-box{margin-top:14px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px;font-size:14px;line-height:1.6;font-style:italic;opacity:0.9}
+/* === ГОЛОСА === */
+.voice-list{display:flex;flex-direction:column;gap:12px}
+.voice-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.voice-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.voice-sliders{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.vc-slider{display:flex;align-items:center;gap:10px;font-size:12px}
+.vc-slider span{opacity:0.6;min-width:92px}
+.vc-slider input[type=range]{flex:1;accent-color:var(--orange)}
+.vc-slider b{min-width:34px;text-align:right;color:var(--gold)}
+.switch{position:relative;display:inline-block;width:44px;height:24px;cursor:pointer}
+.switch input{opacity:0;width:0;height:0}
+.switch-track{position:absolute;inset:0;background:var(--card2);border:1px solid var(--line);border-radius:999px;transition:all .2s}
+.switch-track::before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;border-radius:50%;background:#888;transition:all .2s}
+.switch input:checked + .switch-track{background:rgba(255,107,53,0.25);border-color:var(--orange)}
+.switch input:checked + .switch-track::before{transform:translateX(20px);background:var(--orange)}
+.vtest-wait{font-size:13px;opacity:0.6;margin-top:10px}
+@media (max-width:640px){.voice-sliders{grid-template-columns:1fr}}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -2564,7 +2581,60 @@ function promptPreview(){
   document.getElementById('pr-preview').innerHTML = `<div class="prompt-preview-box">🔊 ${out}</div>`;
 }
 window.promptPick=promptPick; window.promptSave=promptSave; window.promptPreview=promptPreview; window.highlightVars=highlightVars;
-async function renderVoices(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Голоса…</div>'; }
+let voiceConfigs = [];
+/**
+ * @function renderVoices
+ * @description Вкладка «Голоса»: таблица с inline-слайдерами параметров,
+ *              переключателем активности и кнопкой теста.
+ */
+async function renderVoices(){
+  const shell = document.getElementById('admin-shell'); if(!shell) return;
+  try{
+    const data = await apiFetch('/api/admin-voices?password='+encodeURIComponent(adminPwd()));
+    voiceConfigs = data.voices||[];
+    const sliders = (v,key)=>`<label class="vc-slider"><span>${({stability:'Стабильность',similarity_boost:'Похожесть',style:'Стиль',speed:'Скорость'})[key]}</span>
+      <input type="range" min="0" max="1" step="0.05" value="${v[key]}" oninput="this.nextElementSibling.textContent=this.value;voiceEdit('${v.id}','${key}',this.value)"><b>${v[key]}</b></label>`;
+    shell.innerHTML = `
+      <div class="crm-toolbar"><h2 class="crm-title">Голоса</h2></div>
+      <div class="voice-list">
+        ${voiceConfigs.map(v=>`<div class="voice-card" id="vc-${v.id}">
+          <div class="voice-card-head">
+            <div><b>${v.display_name}</b> <span class="crm-src">${v.voice_name}</span></div>
+            <label class="switch"><input type="checkbox" ${v.is_active?'checked':''} onchange="voiceEdit('${v.id}','is_active',this.checked)"><span class="switch-track"></span></label>
+          </div>
+          <div class="voice-sliders">${sliders(v,'stability')}${sliders(v,'similarity_boost')}${sliders(v,'style')}${sliders(v,'speed')}</div>
+          <div class="admin-modal-actions">
+            <button class="cta" type="button" onclick="voiceSave('${v.id}')">Сохранить</button>
+            <button class="btn-ghost" type="button" onclick="voiceTest('${v.voice_key}',this)">🔊 Тест</button>
+          </div>
+          <div class="voice-test-out" id="vtest-${v.id}"></div>
+        </div>`).join('')}
+      </div>`;
+  }catch(e){ if(e.status===401){adminLogout();return;} shell.innerHTML=`<div class="field-error-msg" style="padding:24px;text-align:center">Ошибка: ${e.message}</div>`; }
+}
+function voiceEdit(id,key,val){
+  const v = voiceConfigs.find(x=>x.id===id); if(!v) return;
+  v[key] = (key==='is_active') ? val : parseFloat(val);
+}
+async function voiceSave(id){
+  const v = voiceConfigs.find(x=>x.id===id); if(!v) return;
+  try{
+    await apiFetch('/api/admin-voices',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), id, stability:v.stability, similarity_boost:v.similarity_boost, style:v.style, speed:v.speed, is_active:v.is_active})});
+    showToast('Голос сохранён','success');
+  }catch(e){ showToast('Ошибка: '+e.message,'error'); }
+}
+async function voiceTest(voiceKey, btn){
+  const card = btn.closest('.voice-card'); const out = card.querySelector('.voice-test-out');
+  btn.disabled=true; const orig=btn.textContent; btn.textContent='Генерируем…';
+  if(out) out.innerHTML='<div class="vtest-wait">⏳ Создаём тестовый голос (до 25с)…</div>';
+  try{
+    const data = await apiFetch('/api/admin-test-voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), voice_key:voiceKey})}, 1);
+    if(data.audio_url){ out.innerHTML=`<audio controls autoplay src="${data.audio_url}" style="width:100%;margin-top:10px"></audio>`; }
+    else { out.innerHTML='<div class="vtest-wait">Задача создана, но аудио ещё готовится. Попробуйте «Тест» снова через минуту.</div>'; }
+  }catch(e){ out.innerHTML=`<div class="field-error-msg">Ошибка теста: ${e.message}</div>`; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+}
+window.voiceEdit=voiceEdit; window.voiceSave=voiceSave; window.voiceTest=voiceTest;
 async function renderPricing(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Цены…</div>'; }
 async function renderKie(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Kie.ai…</div>'; }
 window.renderFinance=renderFinance; window.renderPrompts=renderPrompts; window.renderVoices=renderVoices; window.renderPricing=renderPricing; window.renderKie=renderKie;

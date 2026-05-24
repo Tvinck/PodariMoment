@@ -2,7 +2,7 @@
 // Возвращает { task_id }. Готовый файл придёт обычным путём (опрос/коллбэк),
 // но для теста проще опросить getTaskDetail из админки.
 const { checkAdmin } = require('./_lib/admin');
-const { getVoiceConfig } = require('./_generateVoice');
+const { getVoiceConfig, fetchTaskDetail } = require('./_generateVoice');
 
 const KIE_CREATE_URL = 'https://api.kie.ai/api/v1/jobs/createTask';
 
@@ -37,6 +37,18 @@ module.exports = async (req, res) => {
     const data = await r.json().catch(()=>({}));
     if (!r.ok || (data.code && data.code !== 200)) throw new Error(data.msg || `Kie.ai ${r.status}`);
     const taskId = (data.data && (data.data.taskId || data.data.recordId)) || data.taskId;
-    res.status(200).json({ task_id: String(taskId||'') });
+    if (!taskId) throw new Error('Kie.ai не вернул taskId');
+
+    // Короткий тест — ждём результат до ~25с
+    let audioUrl = null;
+    for (let i = 0; i < 12; i++) {
+      await new Promise((r2) => setTimeout(r2, 2000));
+      try {
+        const det = await fetchTaskDetail(taskId);
+        if (det.status === 'completed' && det.audioUrl) { audioUrl = det.audioUrl; break; }
+        if (det.status === 'failed') break;
+      } catch (_) {}
+    }
+    res.status(200).json({ task_id: String(taskId), audio_url: audioUrl });
   } catch(e){ res.status(502).json({error: String(e&&e.message||e)}); }
 };

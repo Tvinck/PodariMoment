@@ -1036,6 +1036,35 @@ body.legal-open{overflow:hidden}
 .admin-modal-input:focus{border-color:rgba(255,107,53,0.5);outline:none}
 .admin-modal-hint{font-size:12px;opacity:0.5;margin-top:8px}
 .admin-modal-actions{display:flex;gap:10px;margin-top:18px}
+/* === CRM === */
+.admin-nav{display:flex;gap:6px}
+.admin-nav-tab{padding:8px 14px;border-radius:999px;background:transparent;border:1px solid var(--line);font-size:12px;font-weight:600;cursor:pointer;color:rgba(255,255,255,0.7);transition:all .2s}
+.admin-nav-tab:hover{color:#fff}
+.admin-nav-tab.act{background:#fff;color:#0a0a0f;border-color:#fff}
+.crm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.crm-title{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:24px;letter-spacing:-0.03em;margin:0}
+.crm-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
+.crm-col{flex:0 0 240px;min-width:240px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.crm-col-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;font-size:13px;font-weight:700}
+.crm-col-count{background:rgba(0,0,0,0.25);border-radius:999px;padding:1px 8px;font-size:11px}
+.cs-new{background:rgba(59,130,246,0.18);color:#93c5fd}
+.cs-contacted{background:rgba(255,209,102,0.18);color:var(--gold)}
+.cs-interested{background:rgba(255,107,53,0.18);color:var(--orange)}
+.cs-ordered{background:rgba(168,85,247,0.18);color:#d8b4fe}
+.cs-done{background:rgba(34,197,94,0.18);color:#86efac}
+.cs-lost{background:rgba(239,68,68,0.18);color:#fca5a5}
+.crm-col-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-height:60px}
+.crm-empty{text-align:center;opacity:0.3;font-size:13px;padding:14px}
+.crm-card{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.crm-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.crm-src{font-size:10px;font-weight:700;background:rgba(255,255,255,0.08);border-radius:999px;padding:2px 8px;opacity:0.8}
+.crm-contact{display:block;font-size:12px;color:var(--orange);text-decoration:none;margin-bottom:2px}
+.crm-card-date{font-size:11px;opacity:0.45;margin-top:4px}
+.crm-order-link{display:inline-block;font-size:11px;color:var(--gold);cursor:pointer;margin-top:6px}
+.crm-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.crm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.crm-reasons{font-size:13px;line-height:1.4;opacity:0.85;margin:6px 0 4px}
+@media (max-width:640px){.crm-stats{grid-template-columns:1fr}}
 @media (max-width:640px){
   .aord{grid-template-columns:1fr 1fr;gap:10px}
   .aord-email{grid-column:1/-1}
@@ -2266,6 +2295,112 @@ const ADMIN_STATUS_ORDER = ['pending','paid','processing','done','generation_fai
 const GENDER_LABEL = {boy:'💙 Мальчик', girl:'💗 Девочка', surprise:'❓ Сюрприз'};
 const VOICE_LABEL = {male:'Мужской', female:'Женский', child:'Детский'};
 function adminPwd(){ try{ return sessionStorage.getItem('pm_admin_pwd')||''; }catch(_){ return ''; } }
+let adminSection = 'orders';
+let crmLeads = [];
+const CRM_STAGES = [
+  {id:'new',        label:'Новые',     ico:'🆕', cls:'cs-new'},
+  {id:'contacted',  label:'Связались', ico:'📞', cls:'cs-contacted'},
+  {id:'interested', label:'Интерес',   ico:'💡', cls:'cs-interested'},
+  {id:'ordered',    label:'Заказали',  ico:'🛍', cls:'cs-ordered'},
+  {id:'done',       label:'Готово',    ico:'✅', cls:'cs-done'},
+  {id:'lost',       label:'Отказ',     ico:'❌', cls:'cs-lost'}
+];
+const CRM_SOURCE = {avito:'Авито', vk:'ВК', telegram:'Telegram', direct:'Прямой', referral:'Реферал'};
+
+/**
+ * @function renderCrm
+ * @description CRM-секция админки: грузит лиды (GET /api/crm-leads) и рисует
+ *              канбан-воронку. Соответствует разделу CRM из ТЗ.
+ * @sideEffects Сетевой запрос, перерисовка #admin-shell
+ */
+async function renderCrm(){
+  const shell = document.getElementById('admin-shell');
+  if(!shell) return;
+  try{
+    const res = await fetch('/api/crm-leads?password='+encodeURIComponent(adminPwd()));
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||'Ошибка');
+    crmLeads = data.leads||[];
+    renderCrmBoard();
+  }catch(e){ shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить CRM: ${e.message}</div>`; }
+}
+function nextStage(stage){
+  const order = ['new','contacted','interested','ordered','done'];
+  const i = order.indexOf(stage);
+  return (i>=0 && i<order.length-1) ? order[i+1] : null;
+}
+function crmStats(){
+  const total = crmLeads.length;
+  const ordered = crmLeads.filter(l=>['ordered','done'].includes(l.stage)).length;
+  const conv = total ? Math.round(ordered/total*100) : 0;
+  // среднее время new→ordered (по ordered_at - created_at)
+  const deals = crmLeads.filter(l=>l.ordered_at);
+  let avgDays = '—';
+  if(deals.length){
+    const sum = deals.reduce((s,l)=>s+(new Date(l.ordered_at)-new Date(l.created_at)),0);
+    avgDays = (sum/deals.length/86400000).toFixed(1)+' дн';
+  }
+  // топ причин отказа
+  const reasons = {};
+  crmLeads.filter(l=>l.stage==='lost'&&l.lost_reason).forEach(l=>{ const r=l.lost_reason.trim(); reasons[r]=(reasons[r]||0)+1; });
+  const top = Object.entries(reasons).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  return {conv, avgDays, top};
+}
+function renderCrmBoard(){
+  const shell = document.getElementById('admin-shell');
+  if(!shell) return;
+  const st = crmStats();
+  const columns = CRM_STAGES.map(stg=>{
+    const leads = crmLeads.filter(l=>l.stage===stg.id);
+    return `<div class="crm-col">
+      <div class="crm-col-head ${stg.cls}"><span>${stg.ico} ${stg.label}</span><span class="crm-col-count">${leads.length}</span></div>
+      <div class="crm-col-body">
+        ${leads.map(l=>crmCard(l)).join('') || '<div class="crm-empty">—</div>'}
+      </div>
+    </div>`;
+  }).join('');
+  const topReasons = st.top.length ? st.top.map(([r,n])=>`${r} (${n})`).join(', ') : '—';
+  shell.innerHTML = `
+    <div class="crm-toolbar">
+      <h2 class="crm-title">Воронка продаж</h2>
+      <button class="cta" type="button" onclick="crmOpenModal()">+ Новый лид</button>
+    </div>
+    <div class="crm-board">${columns}</div>
+    <div class="crm-stats">
+      <div class="acc-stat-card"><div class="acc-stat-ico">📈</div><div class="acc-stat-num">${st.conv}%</div><div class="acc-stat-lab">Конверсия</div></div>
+      <div class="acc-stat-card"><div class="acc-stat-ico">⏱</div><div class="acc-stat-num" style="font-size:26px">${st.avgDays}</div><div class="acc-stat-lab">Среднее время сделки</div></div>
+      <div class="acc-stat-card"><div class="acc-stat-ico">📉</div><div class="crm-reasons">${topReasons}</div><div class="acc-stat-lab">Топ причин отказа</div></div>
+    </div>`;
+}
+function crmCard(l){
+  const src = CRM_SOURCE[l.source] || 'Прямой';
+  const nx = nextStage(l.stage);
+  const orderLink = l.order_id ? `<a class="crm-order-link" onclick="goTrack('${l.order_id}')">→ Заказ #PM-${String(l.order_id).slice(0,8)}</a>` : '';
+  return `<div class="crm-card">
+    <div class="crm-card-top"><b>${l.name||'Без имени'}</b><span class="crm-src">${src}</span></div>
+    ${l.email?`<a class="crm-contact" href="mailto:${l.email}">${l.email}</a>`:''}
+    ${l.phone?`<a class="crm-contact" href="tel:${l.phone}">${l.phone}</a>`:''}
+    <div class="crm-card-date">${fmtDateTime(l.created_at)}</div>
+    ${orderLink}
+    <div class="crm-card-actions">
+      ${nx?`<button class="btn-mini" onclick="crmMove('${l.id}','${nx}')">Переместить →</button>`:''}
+      <button class="btn-mini" onclick="crmOpenModal('${l.id}')">✏️</button>
+    </div>
+  </div>`;
+}
+async function crmMove(id, stage){
+  try{
+    const res = await fetch('/api/crm-leads',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), id, stage})});
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json(); if(!res.ok) throw new Error(data.error||'Ошибка');
+    const i = crmLeads.findIndex(l=>l.id===id); if(i>=0) crmLeads[i]=data.lead;
+    renderCrmBoard();
+  }catch(e){ alert('Не удалось переместить: '+e.message); }
+}
+function crmOpenModal(id){ /* реализуется в модалках CRM */ }
+window.crmOpenModal=crmOpenModal;
+window.adminSetSection=adminSetSection; window.renderCrm=renderCrm; window.crmMove=crmMove;
 
 /**
  * @function renderAdmin
@@ -2298,11 +2433,17 @@ function renderAdmin(){
   }
   view.innerHTML = `<div class="admin-topbar">
       <div class="admin-topbar-brand"><span class="admin-topbar-logo">🎀</span> Панель управления</div>
+      <div class="admin-nav">
+        <button class="admin-nav-tab${adminSection==='orders'?' act':''}" onclick="adminSetSection('orders')">📦 Заказы</button>
+        <button class="admin-nav-tab${adminSection==='crm'?' act':''}" onclick="adminSetSection('crm')">📇 CRM</button>
+      </div>
       <button class="btn-ghost" style="padding:8px 16px;font-size:12px" onclick="adminLogout()">Выйти</button>
     </div>
     <section class="admin"><div id="admin-shell">${adminSkeleton()}</div></section>`;
-  adminFetchOrders();
+  if(adminSection==='crm') renderCrm(); else adminFetchOrders();
 }
+function adminSetSection(s){ adminSection=s; renderAdmin(); }
+window.adminSetSection = adminSetSection;
 function adminSkeleton(){
   const kpi = '<div class="skel skel-kpi"></div>';
   const row = '<div class="skel skel-arow"></div>';

@@ -15,7 +15,9 @@
     { "source": "/account", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" },
     { "source": "/success", "destination": "/index.html" },
-    { "source": "/track", "destination": "/index.html" }
+    { "source": "/track", "destination": "/index.html" },
+    { "source": "/faq", "destination": "/index.html" },
+    { "source": "/about", "destination": "/index.html" }
   ],
   "headers": [
     {

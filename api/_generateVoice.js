@@ -100,13 +100,59 @@ function parseKieResult(payload) {
   return { status, audioUrl };
 }
 
+// --- Кэш конфигов из Supabase (5 минут), fallback на хардкод ---
+let _cfgCache = { t: 0, templates: null, voices: null };
+async function loadConfig() {
+  if (Date.now() - _cfgCache.t < 300000 && _cfgCache.voices) return _cfgCache;
+  try {
+    const sb = getAdminClient();
+    const [{ data: templates }, { data: voices }] = await Promise.all([
+      sb.from('prompt_templates').select('*').eq('is_active', true),
+      sb.from('voice_config').select('*').eq('is_active', true),
+    ]);
+    _cfgCache = { t: Date.now(), templates: templates || [], voices: voices || [] };
+  } catch { _cfgCache = { t: Date.now(), templates: [], voices: [] }; }
+  return _cfgCache;
+}
+
+/**
+ * @function getVoiceConfig
+ * @description Настройки голоса из Supabase (или дефолт). Используется
+ *              в generateVoice и admin-test-voice.
+ */
+async function getVoiceConfig(voiceKey) {
+  const cfg = await loadConfig();
+  const v = (cfg.voices || []).find((x) => x.voice_key === voiceKey);
+  if (v) return v;
+  return { voice_name: VOICE_NAMES[voiceKey] || VOICE_NAMES.female, stability: 0.6, similarity_boost: 0.8, style: 0.4, speed: 0.9 };
+}
+
+// Текст: свой текст пользователя → шаблон из БД → хардкод-шаблон
+async function resolveText(order) {
+  const { custom } = parseScenario(order.scenario);
+  if (custom) return buildText(order); // buildText уже подставит кастом
+  const cfg = await loadConfig();
+  const { key } = parseScenario(order.scenario);
+  const tpl = (cfg.templates || []).find((t) => t.scenario === key && t.baby_gender === order.baby_gender);
+  if (tpl && tpl.template) {
+    const names = order.parent_names || 'дорогие родители';
+    const date = fmtDate(order.party_date);
+    const noun = GENDER_NOUN[order.baby_gender] || 'малыш';
+    return tpl.template
+      .replace(/\{parent_names\}/g, names)
+      .replace(/\{party_date\}/g, date)
+      .replace(/\{baby_gender\}/g, noun);
+  }
+  return buildText(order);
+}
+
 // Запускает генерацию. Обновляет заказ: kie_task_id + статус processing.
 async function generateVoice(order) {
   const apiKey = process.env.KIE_API_KEY;
   if (!apiKey) throw new Error('KIE_API_KEY not configured');
 
-  const text = buildText(order);
-  const voice = VOICE_NAMES[order.voice_type] || VOICE_NAMES.female;
+  const text = await resolveText(order);
+  const vcfg = await getVoiceConfig(order.voice_type);
   const model = TARIFF_MODEL[order.tariff] || TARIFF_MODEL.premium;
   const base = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
   const secret = process.env.KIE_WEBHOOK_SECRET || '';
@@ -122,11 +168,11 @@ async function generateVoice(order) {
       callBackUrl,
       input: {
         text,
-        voice,
-        stability: 0.6,
-        similarity_boost: 0.8,
-        style: 0.4,
-        speed: 0.9,
+        voice: vcfg.voice_name,
+        stability: vcfg.stability,
+        similarity_boost: vcfg.similarity_boost,
+        style: vcfg.style,
+        speed: vcfg.speed,
         language_code: 'ru',
       },
     }),
@@ -176,4 +222,4 @@ async function storeAudioToOrder(order, audioUrl) {
   return pub.publicUrl;
 }
 
-module.exports = { generateVoice, buildText, fetchTaskDetail, parseKieResult, storeAudioToOrder, VOICE_NAMES };
+module.exports = { generateVoice, buildText, fetchTaskDetail, parseKieResult, storeAudioToOrder, getVoiceConfig, VOICE_NAMES };

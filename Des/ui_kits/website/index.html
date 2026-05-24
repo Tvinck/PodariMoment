@@ -1085,6 +1085,23 @@ body.legal-open{overflow:hidden}
 .drw-hist-t{font-size:12px;opacity:0.5}
 .drw-err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:12px;font-size:12px;color:#fca5a5}
 @media (max-width:640px){.drw-panel{width:100%}}
+/* === TRACK timeline v2 === */
+.tl2{position:relative;max-width:460px;margin:0 auto;padding-left:8px}
+.tl2-step{position:relative;display:flex;gap:18px;padding-bottom:30px}
+.tl2-step::before{content:"";position:absolute;left:21px;top:44px;bottom:-4px;width:2px;background:var(--grad);opacity:0.5}
+.tl2-step:last-child::before{display:none}
+.tl2-step.tl2-future::before{background:var(--line);opacity:1}
+.tl2-dot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:18px;flex-shrink:0;z-index:1}
+.tl2-done .tl2-dot{background:var(--grad);color:#1a0d05;font-weight:800}
+.tl2-current .tl2-dot{border:2px solid var(--orange);background:rgba(255,107,53,0.1);animation:tlPulse 1.6s ease-in-out infinite}
+.tl2-future .tl2-dot{border:1px solid var(--line);opacity:0.4}
+@keyframes tlPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,107,53,0.5)}50%{box-shadow:0 0 0 8px rgba(255,107,53,0)}}
+.tl2-body{padding-top:4px}
+.tl2-future .tl2-body{opacity:0.4}
+.tl2-title{font-weight:700;font-size:15px;letter-spacing:-0.01em}
+.tl2-time{font-size:12px;color:var(--gold);margin-top:2px}
+.tl2-desc{font-size:12px;opacity:0.55;margin-top:3px}
+@media (prefers-reduced-motion: reduce){.tl2-current .tl2-dot{animation:none}}
 @media (max-width:640px){
   .aord{grid-template-columns:1fr 1fr;gap:10px}
   .aord-email{grid-column:1/-1}
@@ -2231,28 +2248,39 @@ async function trackFetch(oid){
 }
 function trackHtml(d){
   const fmt = iso => iso ? fmtDateTime(iso) : '';
-  const paid = d.status!=='pending' && d.status!=='failed';
-  const proc = d.status==='processing' || d.status==='paid';
   const done = d.status==='done';
+  const proc = d.status==='processing' || d.status==='paid';
   const failed = d.status==='generation_failed' || d.status==='failed';
-  const step = (active, ok, title, time, pulse) =>
-    `<div class="tl-step ${ok?'ok':''} ${active?'active':''}">
-      <div class="tl-dot ${pulse?'pulse':''}"></div>
-      <div class="tl-body"><div class="tl-title">${title}</div>${time?`<div class="tl-time">${time}</div>`:''}</div>
+  // Определяем индекс текущего этапа: 0 создан, 1 оплата, 2 генерация, 3 готов
+  let cur = 0;
+  if(d.paid_at || proc || done) cur = 1;
+  if(proc) cur = 2;
+  if(done) cur = 3;
+  const STEPS = [
+    {ico:'📝', title:'Заказ создан',   time:fmt(d.created_at), desc:'Заявка принята'},
+    {ico:'💳', title:'Оплата получена', time:fmt(d.paid_at),    desc:'Платёж подтверждён'},
+    {ico:'⚙️', title:'Генерируется',    time:'',                desc:'ИИ создаёт ваш голос'},
+    {ico:'✅', title:'Файл готов',      time:fmt(d.done_at),    desc:'Можно скачивать'}
+  ];
+  const steps = STEPS.map((s,i)=>{
+    const state = i<cur ? 'done' : (i===cur ? 'current' : 'future');
+    const inner = state==='done' ? '✓' : s.ico;
+    return `<div class="tl2-step tl2-${state}">
+      <div class="tl2-dot">${inner}</div>
+      <div class="tl2-body">
+        <div class="tl2-title">${s.title}</div>
+        ${s.time?`<div class="tl2-time">${s.time}</div>`:''}
+        <div class="tl2-desc">${state==='current'&&i===2?'обычно 1–2 минуты':s.desc}</div>
+      </div>
     </div>`;
+  }).join('');
   return `
     <div class="track-head">
       <div class="kicker">Отслеживание</div>
       <h2>Ваш заказ <em>${d.orderId}</em></h2>
     </div>
-    <div class="track-timeline">
-      ${step(false, true, 'Заказ создан', fmt(d.created_at))}
-      ${step(d.status==='paid', paid, 'Оплата получена', fmt(d.paid_at))}
-      ${step(proc, paid, proc?'Генерируется…':'Генерация', proc?'обычно 1–2 минуты':'', proc)}
-      ${step(false, done, 'Файл готов ✓', fmt(d.done_at))}
-    </div>
+    <div class="tl2">${steps}</div>
     ${done && d.file_url ? `<a class="acc-download" href="${d.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать голос</a><div class="acc-download-meta">Формат MP3 · для личного использования</div>` : ''}
-    ${proc ? `<div class="acc-progress"><div class="acc-progress-bar"></div></div><div class="acc-progress-row"><span>Обычно занимает 1–2 минуты</span></div>` : ''}
     ${failed ? `<div class="track-failed"><p>Что-то пошло не так при создании файла.</p><a class="cta" href="https://t.me/podarimoment" target="_blank" rel="noopener">Написать в поддержку</a></div>` : ''}
     <div style="text-align:center;margin-top:18px"><button class="btn-ghost" type="button" onclick="renderTrack()">🔄 Обновить</button></div>`;
 }

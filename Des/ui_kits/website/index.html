@@ -1065,6 +1065,24 @@ body.legal-open{overflow:hidden}
 .crm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
 .crm-reasons{font-size:13px;line-height:1.4;opacity:0.85;margin:6px 0 4px}
 @media (max-width:640px){.crm-stats{grid-template-columns:1fr}}
+/* === ФИНАНСЫ === */
+.fin-chart-wrap{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+.fin-chart{width:100%;height:auto;display:block}
+.fin-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.fin-kpi{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.fin-kpi-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:26px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0 2px}
+.fin-trend{font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:4px}
+.fin-trend.up{color:#86efac;background:rgba(34,197,94,0.12)}
+.fin-trend.down{color:#fca5a5;background:rgba(239,68,68,0.12)}
+.fin-tariffs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.fin-tcard{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.fin-tname{font-weight:700;font-size:15px}
+.fin-tcount{font-size:12px;opacity:0.55;margin-top:2px}
+.fin-tsum{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:22px;font-weight:800;margin-top:8px}
+.fin-tpct{font-size:11px;opacity:0.5;margin-top:2px}
+.fin-tbar{height:4px;background:rgba(255,255,255,0.08);border-radius:999px;margin-top:8px;overflow:hidden}
+.fin-tbar span{display:block;height:100%;background:var(--grad);border-radius:999px}
+@media (max-width:640px){.fin-kpi-grid{grid-template-columns:repeat(2,1fr)}.fin-tariffs{grid-template-columns:1fr}}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -2391,6 +2409,92 @@ function adminStartPolling(){
   }, 60000);
 }
 function adminStopPolling(){ if(adminPollTimer){ clearInterval(adminPollTimer); adminPollTimer=null; } adminSeenPaid=null; }
+
+// ============================================
+// БЛОК: ФИНАНСЫ (вкладка админки)
+// ============================================
+const TARIFF_PRICE_C = { basic:399, premium:599, vip:999 };
+const TARIFF_NAME_C = { basic:'Базовый', premium:'Премиум', vip:'VIP' };
+async function adminEnsureOrders(){
+  let orders = ordersCache.get('all');
+  if(!orders){ const d = await apiFetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})}); orders=d.orders||[]; ordersCache.set('all',orders); }
+  adminOrders = orders; return orders;
+}
+function dayKey(d){ const x=new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; }
+/**
+ * @function renderFinance
+ * @description Вкладка «Финансы»: SVG-график выручки за 30 дней, KPI и
+ *              разбивка по тарифам. Данные — оплаченные/готовые заказы.
+ */
+async function renderFinance(){
+  const shell = document.getElementById('admin-shell'); if(!shell) return;
+  try{
+    const orders = await adminEnsureOrders();
+    const paid = orders.filter(o=>['paid','processing','done'].includes(o.payment_status));
+    const price = o => TARIFF_PRICE_C[o.tariff]||599;
+    // выручка по дням за 30 дней
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = [];
+    for(let i=29;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); days.push({key:dayKey(d), date:d, sum:0}); }
+    const idx = Object.fromEntries(days.map((d,i)=>[d.key,i]));
+    paid.forEach(o=>{ const k=dayKey(o.paid_at||o.created_at); if(k in idx) days[idx[k]].sum += price(o); });
+    // KPI периодов
+    const sumIn = n => { const from=new Date(today); from.setDate(from.getDate()-n+1); return paid.filter(o=>new Date(o.paid_at||o.created_at)>=from).reduce((s,o)=>s+price(o),0); };
+    const todaySum = days[29].sum, yestSum = days[28].sum;
+    const sum7=sumIn(7), sum30=sumIn(30);
+    const avg = paid.length ? Math.round(sum30/Math.max(1,paid.filter(o=>new Date(o.paid_at||o.created_at)>=new Date(today-29*86400000)).length||paid.length)) : 0;
+    const bestDay = days.reduce((m,d)=>d.sum>m.sum?d:m, {sum:0,date:null});
+    const trend = (cur,prev)=>{ if(!prev) return ''; const p=Math.round((cur-prev)/prev*100); return `<span class="fin-trend ${p>=0?'up':'down'}">${p>=0?'+':''}${p}%</span>`; };
+    const kpi=(ico,num,lab,tr)=>`<div class="fin-kpi"><div class="kpi-ico">${ico}</div><div class="fin-kpi-num">${num}</div><div class="kpi-lab">${lab} ${tr||''}</div></div>`;
+    // разбивка по тарифам
+    const byT = ['basic','premium','vip'].map(t=>{ const list=paid.filter(o=>o.tariff===t); const sum=list.reduce((s,o)=>s+price(o),0); return {t,count:list.length,sum}; });
+    const totalSum = byT.reduce((s,x)=>s+x.sum,0)||1;
+    shell.innerHTML = `
+      <div class="crm-toolbar"><h2 class="crm-title">Финансы</h2><button class="afilter" onclick="renderFinance()">🔄 Обновить</button></div>
+      <div class="fin-chart-wrap">${revenueChartSVG(days)}</div>
+      <div class="fin-kpi-grid">
+        ${kpi('📅', todaySum.toLocaleString('ru')+' ₽', 'Сегодня', trend(todaySum,yestSum))}
+        ${kpi('📆', yestSum.toLocaleString('ru')+' ₽', 'Вчера', '')}
+        ${kpi('🗓', sum7.toLocaleString('ru')+' ₽', '7 дней', '')}
+        ${kpi('📊', sum30.toLocaleString('ru')+' ₽', '30 дней', '')}
+        ${kpi('🧾', avg.toLocaleString('ru')+' ₽', 'Средний чек', '')}
+        ${kpi('🏆', bestDay.sum.toLocaleString('ru')+' ₽', 'Лучший день', '')}
+      </div>
+      <div class="fin-tariffs">
+        ${byT.map(x=>`<div class="fin-tcard">
+          <div class="fin-tname">${TARIFF_NAME_C[x.t]}</div>
+          <div class="fin-tcount">${x.count} заказов</div>
+          <div class="fin-tsum">${x.sum.toLocaleString('ru')} ₽</div>
+          <div class="fin-tpct">${Math.round(x.sum/totalSum*100)}% от выручки</div>
+          <div class="fin-tbar"><span style="width:${Math.round(x.sum/totalSum*100)}%"></span></div>
+        </div>`).join('')}
+      </div>`;
+  }catch(e){ if(e.status===401){adminLogout();return;} shell.innerHTML=`<div class="field-error-msg" style="padding:24px;text-align:center">Ошибка: ${e.message}</div>`; }
+}
+function revenueChartSVG(days){
+  const W=720, H=200, pad=30;
+  const max = Math.max(1, ...days.map(d=>d.sum));
+  const stepX = (W-pad*2)/(days.length-1);
+  const pts = days.map((d,i)=>[pad+i*stepX, H-pad-(d.sum/max)*(H-pad*2)]);
+  const path = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area = path+` L ${pts[pts.length-1][0].toFixed(1)} ${H-pad} L ${pts[0][0].toFixed(1)} ${H-pad} Z`;
+  const dots = pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="#ffd166"><title>${days[i].key}: ${days[i].sum.toLocaleString('ru')} ₽</title></circle>`).join('');
+  const labels = [0,7,14,21,29].map(i=>{ const d=days[i].date; return `<text x="${(pad+i*stepX).toFixed(1)}" y="${H-8}" fill="rgba(255,255,255,0.4)" font-size="10" text-anchor="middle">${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}</text>`; }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="fin-chart" preserveAspectRatio="none">
+    <defs><linearGradient id="finGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ff6b35"/><stop offset="100%" stop-color="#ffd166"/></linearGradient>
+    <linearGradient id="finFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,107,53,0.25)"/><stop offset="100%" stop-color="rgba(255,107,53,0)"/></linearGradient></defs>
+    <path d="${area}" fill="url(#finFill)"/>
+    <path d="${path}" fill="none" stroke="url(#finGrad)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${dots}${labels}
+  </svg>`;
+}
+// Заглушки — реализуются в следующих коммитах
+async function renderPrompts(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Промпты…</div>'; }
+async function renderVoices(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Голоса…</div>'; }
+async function renderPricing(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Цены…</div>'; }
+async function renderKie(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Kie.ai…</div>'; }
+window.renderFinance=renderFinance; window.renderPrompts=renderPrompts; window.renderVoices=renderVoices; window.renderPricing=renderPricing; window.renderKie=renderKie;
+
 const CRM_STAGES = [
   {id:'new',        label:'Новые',     ico:'🆕', cls:'cs-new'},
   {id:'contacted',  label:'Связались', ico:'📞', cls:'cs-contacted'},
@@ -2583,13 +2687,14 @@ function renderAdmin(){
   view.innerHTML = `<div class="admin-topbar">
       <div class="admin-topbar-brand"><span class="admin-topbar-logo">🎀</span> Панель управления</div>
       <div class="admin-nav">
-        <button class="admin-nav-tab${adminSection==='orders'?' act':''}" onclick="adminSetSection('orders')">📦 Заказы</button>
-        <button class="admin-nav-tab${adminSection==='crm'?' act':''}" onclick="adminSetSection('crm')">📇 CRM</button>
+        ${[['orders','📦 Заказы'],['crm','📇 CRM'],['finance','💰 Финансы'],['prompts','🎙 Промпты'],['voices','🗣 Голоса'],['pricing','🏷 Цены'],['kie','🤖 Kie.ai']]
+          .map(([k,l])=>`<button class="admin-nav-tab${adminSection===k?' act':''}" onclick="adminSetSection('${k}')">${l}</button>`).join('')}
       </div>
       <button class="btn-ghost" style="padding:8px 16px;font-size:12px" onclick="adminLogout()">Выйти</button>
     </div>
     <section class="admin"><div id="admin-shell">${adminSkeleton()}</div></section>`;
-  if(adminSection==='crm') renderCrm(); else adminFetchOrders();
+  const R = {crm:renderCrm, finance:renderFinance, prompts:renderPrompts, voices:renderVoices, pricing:renderPricing, kie:renderKie};
+  if(R[adminSection]) R[adminSection](); else adminFetchOrders();
 }
 function adminSetSection(s){ adminSection=s; renderAdmin(); }
 window.adminSetSection = adminSetSection;

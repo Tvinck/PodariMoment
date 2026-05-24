@@ -957,6 +957,8 @@ body.legal-open{overflow:hidden}
 @keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .skel-stat{height:96px;border-radius:20px}
 .skel-card{height:96px;border-radius:22px;margin-bottom:10px}
+.skel-kpi{height:110px;border-radius:22px}
+.skel-arow{height:78px;border-radius:18px}
 /* экран входа ЛК */
 .acc-login{max-width:420px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center}
 .acc-login-logo{font-size:48px;line-height:1;margin-bottom:8px}
@@ -2254,8 +2256,13 @@ function renderAdmin(){
       <div class="admin-topbar-brand"><span class="admin-topbar-logo">🎀</span> Панель управления</div>
       <button class="btn-ghost" style="padding:8px 16px;font-size:12px" onclick="adminLogout()">Выйти</button>
     </div>
-    <section class="admin"><div id="admin-shell">${accSkeleton()}</div></section>`;
+    <section class="admin"><div id="admin-shell">${adminSkeleton()}</div></section>`;
   adminFetchOrders();
+}
+function adminSkeleton(){
+  const kpi = '<div class="skel skel-kpi"></div>';
+  const row = '<div class="skel skel-arow"></div>';
+  return `<div class="kpi-grid">${kpi+kpi+kpi+kpi}</div><div class="aord-list">${row+row+row+row+row}</div>`;
 }
 function adminTogglePwd(btn){
   const inp = document.getElementById('admin-pwd-input');

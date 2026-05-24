@@ -1174,6 +1174,24 @@ body.legal-open{overflow:hidden}
 .not-found{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 24px;gap:16px;max-width:480px;margin:0 auto}
 .nf-code{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:clamp(80px,20vw,160px);letter-spacing:-0.05em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;animation:wiggle 3s ease-in-out infinite}
 .nf-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+/* === FAQ === */
+.faq-wrap{max-width:760px;margin:0 auto}
+.faq-list{display:flex;flex-direction:column;gap:10px}
+.faq-item{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 24px;cursor:pointer;transition:border-color .2s}
+.faq-item.open{border-color:rgba(255,107,53,0.3)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600;font-size:15px}
+.faq-ic{font-size:22px;color:var(--orange);transition:transform .3s var(--ease);flex-shrink:0}
+.faq-item.open .faq-ic{transform:rotate(45deg)}
+.faq-answer{max-height:0;overflow:hidden;transition:max-height .3s var(--ease)}
+.faq-item.open .faq-answer{max-height:400px}
+.faq-answer-inner{padding-top:12px;font-size:14px;line-height:1.6;color:rgba(255,255,255,0.7)}
+/* === ABOUT === */
+.about-wrap{max-width:840px;margin:0 auto}
+.about-lead{font-size:18px;line-height:1.6;opacity:0.85;max-width:640px}
+.about-contacts{margin-top:28px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:8px}
+.about-contacts h4{margin:0 0 6px}
+.about-contacts a{color:var(--orange)}
+.about-legal{font-size:12px;opacity:0.5;margin-top:8px}
 /* === TELEGRAM FAB === */
 .tg-fab{position:fixed;bottom:24px;right:24px;z-index:100;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2AABEE,#229ED9);box-shadow:0 4px 20px rgba(42,171,238,0.4);display:grid;place-items:center;transition:transform .2s var(--spring);text-decoration:none}
 .tg-fab:hover{transform:scale(1.1)}
@@ -1302,11 +1320,10 @@ body.admin-view .tg-fab{display:none}
       <span class="brand-logotype"><b>ПМ Момент</b><em>подарок за 5 минут</em></span>
     </button>
     <div class="topnav-links">
-      <a data-scroll="products">Продукты</a>
-      <a data-go="catalog">Каталог</a>
       <a data-scroll="how">Как работает</a>
+      <a data-go="faq">FAQ</a>
+      <a data-go="about">О нас</a>
       <a data-go="account">Кабинет</a>
-      <a data-go="admin" style="opacity:0.4">Админ</a>
     </div>
     <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
     <div class="topnav-cta-group">
@@ -1512,6 +1529,8 @@ body.admin-view .tg-fab{display:none}
   <div id="view-account" style="display:none"></div>
   <div id="view-track" style="display:none"></div>
   <div id="view-notfound" style="display:none"></div>
+  <div id="view-faq" style="display:none"></div>
+  <div id="view-about" style="display:none"></div>
   <div id="view-admin" style="display:none"></div>
 
   <footer class="site-footer">
@@ -3636,7 +3655,7 @@ document.addEventListener('click',function(e){ if(e.target.closest('.acc-downloa
 })();
 
 // ROUTING
-const VIEWS = ['landing','order','success','admin','catalog','account','track','notfound'];
+const VIEWS = ['landing','order','success','admin','catalog','account','track','notfound','faq','about'];
 function viewToPath(v, prod){
   if(v==='landing') return '/';
   if(v==='order' && prod) return '/order/'+prod;
@@ -3675,6 +3694,59 @@ function render404(){
     </div>
   </div>`;
 }
+const FAQ_DATA = [
+  ['Как быстро я получу файл?','Обычно в течение 2–5 минут после оплаты. В редких случаях до 15 минут. Если прошло больше — напишите нам в Telegram.'],
+  ['Как воспроизвести голос на празднике?','Файл придёт в формате MP3. Его можно: подключить телефон к колонке через Bluetooth; воспроизвести с ноутбука через проектор; подключить к умной колонке (Яндекс Станция и др.); сохранить в облако и открыть с любого устройства.'],
+  ['Можно ли изменить текст сценария?','Да! В поле «Свой текст» при заказе можно написать любой текст — мы озвучим именно его.'],
+  ['Подходит ли для шара с гелием?','Да — многие используют запись вместе с лопанием воздушного шара. Включите её в момент, когда шар лопнет!'],
+  ['Какие голоса доступны?','Мужской, женский и детский. В тарифе Премиум — 5 голосов на выбор, включая торжественный и мягкий.'],
+  ['Что если файл не пришёл?','Проверьте папку «Спам». Если там нет — найдите заказ на странице /track или напишите нам в Telegram с номером заказа.'],
+  ['Можно ли вернуть деньги?','Да, в течение 24 часов, если файл не был доставлен или содержит технический брак. Подробнее — в Политике возврата.'],
+  ['На каком языке будет голос?','На русском. Имена и текст озвучиваются именно так, как вы написали.'],
+  ['Можно ли заказать на другой язык?','Пока только русский. Напишите нам — обсудим индивидуально.'],
+  ['Это настоящий голос или робот?','Это ИИ-голос на базе ElevenLabs — одной из лучших технологий синтеза речи. Звучит естественно, с интонацией и эмоцией. Послушайте демо на странице заказа.'],
+];
+/**
+ * @function renderFaq
+ * @description Страница /faq — аккордеон частых вопросов.
+ */
+function renderFaq(){
+  document.title='Вопросы и ответы — ПодариМомент';
+  const el=document.getElementById('view-faq'); if(!el) return;
+  el.innerHTML=`<section class="section faq-wrap">
+    <div class="section-head" style="text-align:center"><div class="kicker">Помощь</div><h2>Частые <em>вопросы</em></h2></div>
+    <div class="faq-list">
+      ${FAQ_DATA.map(([q,a],i)=>`<div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q"><span>${q}</span><span class="faq-ic">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">${a}</div></div>
+      </div>`).join('')}
+    </div>
+    <div style="text-align:center;margin-top:24px"><button class="cta" type="button" data-prod="gender">Заказать голос →</button></div>
+  </section>`;
+}
+/**
+ * @function renderAbout
+ * @description Страница /about — миссия, как работаем, контакты.
+ */
+function renderAbout(){
+  document.title='О нас — ПодариМомент';
+  const el=document.getElementById('view-about'); if(!el) return;
+  el.innerHTML=`<section class="section about-wrap">
+    <div class="section-head"><div class="kicker">О нас</div><h2>Делаем моменты <em>незабываемыми</em></h2></div>
+    <p class="about-lead">ПодариМомент — сервис, который делает особые моменты незабываемыми с помощью ИИ. Мы верим: каждая семья заслуживает трогательного ритуала раскрытия пола малыша.</p>
+    <div class="how-grid" style="margin-top:24px">
+      <div class="step"><div class="step-icon">🤖</div><div><h4>ИИ-технологии</h4><p>ElevenLabs — топ-1 в синтезе речи, 70+ языков, естественная интонация</p></div></div>
+      <div class="step"><div class="step-icon">⚡</div><div><h4>Моментально</h4><p>Генерация занимает 2–5 минут. Никаких ожиданий и менеджеров</p></div></div>
+      <div class="step"><div class="step-icon">🔒</div><div><h4>Безопасно</h4><p>Оплата через Т-Банк, данные защищены по 152-ФЗ</p></div></div>
+    </div>
+    <div class="about-contacts">
+      <h4>Контакты</h4>
+      <a href="mailto:hello@podarimoment.ru">hello@podarimoment.ru</a>
+      <a href="https://t.me/podarimoment" target="_blank" rel="noopener">@podarimoment в Telegram</a>
+      <div class="about-legal">ИП Кошелев Артём Николаевич · ИНН [ВСТАВИТЬ_ИНН] · ОГРНИП [ВСТАВИТЬ_ОГРНИП]</div>
+    </div>
+  </section>`;
+}
 /**
  * @function go
  * @description Главный SPA-роутер. Переключает view, обновляет URL
@@ -3692,6 +3764,8 @@ function go(v, opts){
   if(v==='account' && typeof renderAccount==='function') safeRender(renderAccount, 'account');
   if(v==='track' && typeof renderTrack==='function') safeRender(renderTrack, 'track');
   if(v==='notfound') render404();
+  if(v==='faq') renderFaq();
+  if(v==='about') renderAbout();
   if(v==='account') track('view_account');
   if(v==='track') track('view_track');
   if(v==='success'){ burstConfetti(); track('purchase',{order_id:(new URLSearchParams(location.search).get('orderId')||'')}); }

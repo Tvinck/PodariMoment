@@ -1170,6 +1170,10 @@ body.legal-open{overflow:hidden}
 .promo-ok{color:#86efac;font-weight:600}
 .promo-bad{color:#fca5a5;font-weight:600}
 .promo-loading{opacity:0.6}
+/* === 404 === */
+.not-found{display:flex;flex-direction:column;align-items:center;text-align:center;padding:80px 24px;gap:16px;max-width:480px;margin:0 auto}
+.nf-code{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:clamp(80px,20vw,160px);letter-spacing:-0.05em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1;animation:wiggle 3s ease-in-out infinite}
+.nf-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 /* === TELEGRAM FAB === */
 .tg-fab{position:fixed;bottom:24px;right:24px;z-index:100;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2AABEE,#229ED9);box-shadow:0 4px 20px rgba(42,171,238,0.4);display:grid;place-items:center;transition:transform .2s var(--spring);text-decoration:none}
 .tg-fab:hover{transform:scale(1.1)}
@@ -1507,6 +1511,7 @@ body.admin-view .tg-fab{display:none}
 
   <div id="view-account" style="display:none"></div>
   <div id="view-track" style="display:none"></div>
+  <div id="view-notfound" style="display:none"></div>
   <div id="view-admin" style="display:none"></div>
 
   <footer class="site-footer">
@@ -3631,7 +3636,7 @@ document.addEventListener('click',function(e){ if(e.target.closest('.acc-downloa
 })();
 
 // ROUTING
-const VIEWS = ['landing','order','success','admin','catalog','account','track'];
+const VIEWS = ['landing','order','success','admin','catalog','account','track','notfound'];
 function viewToPath(v, prod){
   if(v==='landing') return '/';
   if(v==='order' && prod) return '/order/'+prod;
@@ -3648,10 +3653,27 @@ function pathToRoute(path){
   if(p==='/' || p==='') return {view:'landing'};
   const parts = p.split('/').filter(Boolean);
   const v = parts[0];
-  if(!VIEWS.includes(v)) return {view:'landing'};
+  if(!VIEWS.includes(v) || v==='notfound') return {view:'notfound'};
   const out = {view:v};
   if(v==='order' && parts[1]) out.prod = parts[1];
   return out;
+}
+/**
+ * @function render404
+ * @description Рендерит страницу 404 для несуществующих маршрутов.
+ */
+function render404(){
+  document.title = '404 — Страница не найдена · ПодариМомент';
+  const el = document.getElementById('view-notfound');
+  if(el) el.innerHTML = `<div class="not-found">
+    <div class="nf-code">404</div>
+    <h2>Страница не найдена</h2>
+    <p>Возможно, ссылка устарела или была удалена</p>
+    <div class="nf-actions">
+      <button class="cta" type="button" data-go="landing">На главную</button>
+      <button class="btn-ghost" type="button" data-prod="gender">Сделать заказ</button>
+    </div>
+  </div>`;
 }
 /**
  * @function go
@@ -3669,6 +3691,7 @@ function go(v, opts){
   if(v==='admin' && typeof renderAdmin==='function') safeRender(renderAdmin, 'admin');
   if(v==='account' && typeof renderAccount==='function') safeRender(renderAccount, 'account');
   if(v==='track' && typeof renderTrack==='function') safeRender(renderTrack, 'track');
+  if(v==='notfound') render404();
   if(v==='account') track('view_account');
   if(v==='track') track('view_track');
   if(v==='success'){ burstConfetti(); track('purchase',{order_id:(new URLSearchParams(location.search).get('orderId')||'')}); }

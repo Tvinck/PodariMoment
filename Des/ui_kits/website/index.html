@@ -1027,6 +1027,13 @@ body.legal-open{overflow:hidden}
 .admin-more{display:block;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .2s}
 .admin-more:hover{border-color:rgba(255,107,53,0.4)}
 .admin-empty{padding:48px;text-align:center;opacity:0.5;font-size:14px}
+/* модалки админки */
+.admin-modal-info{font-size:13px;opacity:0.7;background:rgba(255,255,255,0.04);padding:10px 14px;border-radius:12px;margin-top:6px}
+.admin-modal-preview{background:var(--bg2);border-radius:14px;padding:16px;font-size:13px;line-height:1.6;opacity:0.85;font-style:italic;margin-bottom:14px}
+.admin-modal-input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:14px}
+.admin-modal-input:focus{border-color:rgba(255,107,53,0.5);outline:none}
+.admin-modal-hint{font-size:12px;opacity:0.5;margin-top:8px}
+.admin-modal-actions{display:flex;gap:10px;margin-top:18px}
 @media (max-width:640px){
   .aord{grid-template-columns:1fr 1fr;gap:10px}
   .aord-email{grid-column:1/-1}
@@ -2402,14 +2409,19 @@ async function adminSetStatus(id, status){
 function adminOpenFileModal(id){
   const o = adminOrders.find(x=>x.id===id);
   const m = document.getElementById('legal-modal');
-  document.getElementById('legal-modal-title').textContent = 'Прикрепить файл к заказу';
+  const tb = {basic:'Базовый',premium:'Премиум',vip:'VIP'}[o&&o.tariff]||'Премиум';
+  document.getElementById('legal-modal-title').textContent = '📎 Прикрепить файл для заказа #'+String(id).slice(0,8);
   document.getElementById('legal-modal-body').innerHTML = `
-    <p>Заказ <b>${String(id).slice(0,8)}</b> · ${o&&o.email||''}</p>
-    <div class="field" style="margin-top:14px"><label>Ссылка на MP3 (Google Drive / Yandex Disk / любой URL)</label>
-      <input class="input" id="admin-file-url" placeholder="https://..." value="${o&&o.file_url?o.file_url:''}">
+    <div class="admin-modal-info">📧 ${o&&o.email||'—'} · 🏷 ${tb} · 🎙 ${(VOICE_LABEL[o&&o.voice_type]||o&&o.voice_type)||'—'}</div>
+    <div class="field" style="margin-top:16px"><label>Ссылка на MP3</label>
+      <input class="input admin-modal-input" id="admin-file-url" placeholder="Вставьте ссылку на MP3 (Google Drive / Yandex Disk)" value="${o&&o.file_url?o.file_url:''}">
     </div>
+    <div class="admin-modal-hint">Убедитесь, что файл открыт по ссылке без авторизации.</div>
     <div class="field-error-msg" id="admin-file-error" style="display:none"></div>
-    <button class="cta" type="button" style="margin-top:16px" onclick="adminSaveFile('${id}')">Сохранить и пометить «Готов» →</button>`;
+    <div class="admin-modal-actions">
+      <button class="cta" type="button" onclick="adminSaveFile('${id}')">Сохранить</button>
+      <button class="btn-ghost" type="button" onclick="closeLegalModal()">Отмена</button>
+    </div>`;
   m.style.display='flex'; document.body.classList.add('legal-open');
   setTimeout(()=>{const i=document.getElementById('admin-file-url');if(i)i.focus();},50);
 }
@@ -2444,14 +2456,14 @@ function adminGenPreview(o){
 function adminConfirmGenerate(id){
   const o = adminOrders.find(x=>x.id===id); if(!o) return;
   const m = document.getElementById('legal-modal');
-  document.getElementById('legal-modal-title').textContent = 'Запустить генерацию голоса?';
+  const sc = (o.scenario||'').split(' — ')[0] || 'Торжественный';
+  document.getElementById('legal-modal-title').textContent = '🎙 Запустить генерацию?';
   document.getElementById('legal-modal-body').innerHTML = `
-    <p>Заказ <b>${String(id).slice(0,8)}</b> · голос: <b>${VOICE_LABEL[o.voice_type]||o.voice_type}</b></p>
-    <h3>Текст сценария</h3>
-    <p style="background:rgba(255,255,255,0.04);padding:12px;border-radius:12px;font-style:italic">${adminGenPreview(o)}</p>
+    <div class="admin-modal-preview">${adminGenPreview(o)}</div>
+    <div class="admin-modal-info">Голос: <b>${VOICE_LABEL[o.voice_type]||o.voice_type}</b> • Сценарий: <b>${sc}</b></div>
     <div class="field-error-msg" id="admin-gen-error" style="display:none"></div>
-    <div style="display:flex;gap:10px;margin-top:16px">
-      <button class="cta" type="button" id="admin-gen-go" onclick="adminGenerate('${id}')">Запустить →</button>
+    <div class="admin-modal-actions">
+      <button class="cta" type="button" id="admin-gen-go" onclick="adminGenerate('${id}')">Запустить генерацию</button>
       <button class="btn-ghost" type="button" onclick="closeLegalModal()">Отмена</button>
     </div>`;
   m.style.display='flex'; document.body.classList.add('legal-open');
@@ -2470,8 +2482,7 @@ async function adminGenerate(id){
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} if(go){go.disabled=false;go.textContent='Запустить →';} }
 }
 async function adminCheckStatus(id, btn){
-  const orig = btn ? btn.textContent : '';
-  if(btn){ btn.disabled=true; btn.textContent='Проверяем…'; }
+  if(btn){ btn.disabled=true; btn.classList.add('spin'); }
   try{
     const res = await fetch(`/api/admin-check-status?orderId=${encodeURIComponent(id)}&password=${encodeURIComponent(adminPwd())}`);
     if(res.status===401){ adminLogout(); return; }
@@ -2479,8 +2490,8 @@ async function adminCheckStatus(id, btn){
     if(!res.ok) throw new Error(data.error||'Ошибка');
     const o = adminOrders.find(x=>x.id===id);
     if(o){ if(data.status) o.payment_status=data.status; if(data.file_url) o.file_url=data.file_url; }
-    renderAdminPanel();
-  }catch(e){ alert('Не удалось проверить статус: '+e.message); if(btn){btn.disabled=false;btn.textContent=orig;} }
+    const box = document.getElementById('admin-orders-table'); if(box) box.innerHTML = renderAdminOrdersTable();
+  }catch(e){ alert('Не удалось проверить статус: '+e.message); if(btn){btn.disabled=false;btn.classList.remove('spin');} }
 }
 window.adminLogin=adminLogin; window.adminLogout=adminLogout; window.adminSetFilter=adminSetFilter;
 window.adminSetStatus=adminSetStatus; window.adminOpenFileModal=adminOpenFileModal; window.adminSaveFile=adminSaveFile;

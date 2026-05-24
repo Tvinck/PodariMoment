@@ -914,6 +914,57 @@ body.legal-open{overflow:hidden}
 .tb-basic{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)}
 .tb-premium{background:linear-gradient(135deg,#ff6b35,#ffd166);color:#1a0d05}
 .tb-vip{background:#ffd166;color:#1a0d05}
+
+/* === ЛК v3 === */
+.acc-wrap{max-width:920px;margin:0 auto}
+.acc-head{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:24px}
+.acc-head-id{display:flex;align-items:center;gap:16px}
+.acc-avatar{width:80px;height:80px;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#1a0d05;font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:34px;font-weight:800;box-shadow:0 8px 24px rgba(255,107,53,0.4);flex-shrink:0}
+.acc-greeting{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:28px;letter-spacing:-0.04em;margin:0;line-height:1.1}
+.acc-subtitle{font-size:14px;opacity:0.6;margin-top:4px}
+.acc-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.acc-stat-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 24px}
+.acc-stat-ico{font-size:22px;margin-bottom:8px}
+.acc-stat-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:36px;font-weight:800;line-height:1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.acc-stat-lab{font-size:11px;letter-spacing:0.16em;text-transform:uppercase;opacity:0.4;margin-top:6px}
+.ord-card{display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:10px;transition:transform .3s var(--spring),border-color .3s}
+.ord-card:hover{transform:translateY(-3px);border-color:rgba(255,107,53,0.3)}
+.ord-card-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:18px;color:var(--gold);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ord-card-date{font-size:12px;opacity:0.5;margin-top:4px}
+.ord-card-params{font-size:13px;opacity:0.7;margin-top:6px}
+.ord-card-r{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0}
+.ord-card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.ord-dl{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#86efac;border-radius:999px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s var(--spring)}
+.ord-dl:hover{background:rgba(34,197,94,0.25);transform:translateY(-1px)}
+.ord-track{padding:8px 14px !important;font-size:12px !important}
+.st-dots{display:inline-flex;gap:3px;margin-left:6px}
+.st-dots i{width:4px;height:4px;border-radius:50%;background:currentColor;animation:stPulse 1.2s ease-in-out infinite}
+.st-dots i:nth-child(2){animation-delay:.2s}.st-dots i:nth-child(3){animation-delay:.4s}
+.acc-empty{text-align:center;padding:60px 24px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.acc-empty-ico{font-size:80px;line-height:1;animation:wiggle 2.4s ease-in-out infinite;transform-origin:50% 80%}
+@keyframes wiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+.acc-empty-title{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:24px;margin:12px 0 0}
+.acc-empty-sub{font-size:14px;opacity:0.5;margin:0 0 16px}
+/* статусы новые акценты */
+.status.s-paid{background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#93c5fd}
+.status.s-processing{background:rgba(255,209,102,0.1);border:1px solid rgba(255,209,102,0.3);color:var(--gold)}
+.status.s-ok{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac}
+.status.s-err{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#fca5a5}
+.status.s-refunded{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:#d8b4fe}
+.status.s-pending{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6)}
+/* skeleton */
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:skeleton 1.5s infinite;border-radius:12px}
+@keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-stat{height:96px;border-radius:20px}
+.skel-card{height:96px;border-radius:22px;margin-bottom:10px}
+@media (max-width:640px){
+  .acc-stats-row{grid-template-columns:1fr;gap:10px}
+  .acc-avatar{width:60px;height:60px;font-size:26px}
+  .acc-greeting{font-size:22px}
+  .ord-card{flex-direction:column;align-items:stretch}
+  .ord-card-r{align-items:stretch}
+  .ord-card-actions{justify-content:flex-start}
+}
 </style>
 </head>
 <body>
@@ -1865,24 +1916,40 @@ function fmtDateTime(iso){
 function getStoredEmail(){
   try{ const u = JSON.parse(localStorage.getItem('pm_user')||'{}'); return (u.email||'').trim(); }catch(_){ return ''; }
 }
-function accShell(inner){
-  return `<section class="section">
-    <div class="acc-hero">
-      <div class="acc-hero-grid"></div>
-      <div class="acc-orb o1"></div><div class="acc-orb o2"></div><div class="acc-orb o3"></div>
-      <div class="acc-hero-row">
-        <div class="acc-id">
-          <div class="acc-ava">🎀</div>
-          <div>
-            <div class="kicker">Личный кабинет</div>
-            <h2>Ваши заказы</h2>
-            <div class="acc-meta" id="acc-email-meta"></div>
-          </div>
-        </div>
+function accInitial(email){ return (email||'?').trim().charAt(0).toUpperCase() || '?'; }
+function accName(email){ const n=(email||'').split('@')[0]||'друг'; return n.charAt(0).toUpperCase()+n.slice(1); }
+function accHeader(email){
+  return `<div class="acc-head">
+    <div class="acc-head-id">
+      <div class="acc-avatar">${accInitial(email)}</div>
+      <div>
+        <h2 class="acc-greeting">Привет, ${accName(email)}! 👋</h2>
+        <div class="acc-subtitle">Ваши заказы и файлы — всё здесь</div>
       </div>
     </div>
+    <button class="cta" type="button" data-prod="gender">+ Новый заказ</button>
+  </div>`;
+}
+function accShell(inner, email){
+  return `<section class="section acc-wrap">
+    ${accHeader(email||'')}
     <div id="acc-content">${inner}</div>
   </section>`;
+}
+function accStats(orders){
+  const total = orders.length;
+  const done = orders.filter(o=>o.payment_status==='done').length;
+  const proc = orders.filter(o=>o.payment_status==='processing'||o.payment_status==='paid').length;
+  const card = (icon,num,label)=>`<div class="acc-stat-card"><div class="acc-stat-ico">${icon}</div><div class="acc-stat-num">${num}</div><div class="acc-stat-lab">${label}</div></div>`;
+  return `<div class="acc-stats-row">
+    ${card('💛', total, 'Всего заказов')}
+    ${card('✅', done, 'Получено файлов')}
+    ${card('⏳', proc, 'В обработке')}
+  </div>`;
+}
+function accSkeleton(){
+  const row = '<div class="skel skel-card"></div>';
+  return `<div class="acc-stats-row"><div class="skel skel-stat"></div><div class="skel skel-stat"></div><div class="skel skel-stat"></div></div><div class="orders-list">${row+row+row}</div>`;
 }
 function accEmailForm(prefill){
   return accShell(`
@@ -1893,60 +1960,51 @@ function accEmailForm(prefill){
         <button class="cta" type="button" onclick="accLoadByInput()">Найти заказы →</button>
       </div>
       <div class="field-help">Мы покажем все заказы, оформленные на этот адрес.</div>
-    </div>`);
+    </div>`, prefill);
 }
 function accEmpty(email){
   return accShell(`
-    <div class="reviews-empty">
-      <div class="reviews-empty-icon">🎀</div>
-      <p class="reviews-empty-text">Здесь появятся ваши заказы.<br><span style="opacity:0.6;font-size:13px">На ${email} пока пусто.</span></p>
-      <button class="cta" data-prod="gender">Заказать голос →</button>
-      <button class="btn-ghost" type="button" onclick="accForget()" style="margin-top:4px">Искать по другому email</button>
-    </div>`);
+    <div class="acc-empty">
+      <div class="acc-empty-ico">🎀</div>
+      <h3 class="acc-empty-title">Здесь появятся ваши заказы</h3>
+      <p class="acc-empty-sub">Сделайте первый заказ и порадуйте близких</p>
+      <button class="cta" data-prod="gender">Заказать голос</button>
+      <button class="btn-ghost" type="button" onclick="accForget()" style="margin-top:8px;font-size:12px">Искать по другому email</button>
+    </div>`, email);
 }
 function accOrdersHtml(orders, email){
-  return accShell(`
-    <div class="orders-list">
-      ${orders.map(o=>{
-        const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-new', icon:'•'};
-        const isProc = o.payment_status==='processing' || o.payment_status==='paid';
-        const isDone = o.payment_status==='done' && o.file_url;
-        const TB = {basic:{l:'Базовый',c:'tb-basic'}, premium:{l:'Премиум',c:'tb-premium'}, vip:{l:'VIP',c:'tb-vip'}};
-        const tb = TB[o.tariff] || TB.premium;
-        return `<div class="ord-card-v2">
-          <div class="ord-card-top">
-            <div>
-              <div class="ord-row-id">№ ${String(o.id).slice(0,8)} <span class="tariff-badge-sm ${tb.c}">${tb.l}</span></div>
-              <div class="ord-row-name">Голос для гендер-пати</div>
-              <div class="ord-row-date">${fmtDateTime(o.created_at)}</div>
-            </div>
-            <span class="status ${st.cls}">${st.icon} ${st.label}</span>
-          </div>
-          <div><button class="btn-mini" type="button" onclick="goTrack('${o.id}')">📋 Отследить заказ</button></div>
-          ${isDone ? `
-            <a class="acc-download" href="${o.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать голос</a>
-            <div class="acc-download-meta">Формат MP3 · Для личного использования</div>
-          ` : ''}
-          ${isProc ? `
-            <div class="acc-progress"><div class="acc-progress-bar"></div></div>
-            <div class="acc-progress-row">
-              <span>Обычно занимает 1–2 минуты</span>
-              <button class="btn-mini" onclick="renderAccount()" type="button">🔄 Обновить статус</button>
-            </div>
-          ` : ''}
-          ${o.payment_status==='generation_failed' ? `<div class="field-help" style="color:#ff5470">Что-то пошло не так при генерации. Напишите на hello@podarimoment.ru — поможем.</div>` : ''}
-        </div>`;
-      }).join('')}
-    </div>
-    <div style="margin-top:18px;text-align:center">
-      <button class="btn-ghost" type="button" onclick="accForget()">Искать по другому email</button>
-    </div>`);
+  const TB = {basic:{l:'Базовый',c:'tb-basic'}, premium:{l:'Премиум',c:'tb-premium'}, vip:{l:'VIP',c:'tb-vip'}};
+  const VOICE = {male:'Мужской',female:'Женский',child:'Детский',solemn:'Торжественный',soft:'Мягкий'};
+  const GEN = {boy:'💙 Мальчик',girl:'💗 Девочка',surprise:'❓ Сюрприз'};
+  const cards = orders.map(o=>{
+    const st = ACC_STATUS[o.payment_status] || {label:o.payment_status, cls:'s-pending', icon:'•'};
+    const tb = TB[o.tariff] || TB.premium;
+    const sc = (o.scenario||'').split(' — ')[0] || '—';
+    const isDone = o.payment_status==='done' && o.file_url;
+    const pulse = o.payment_status==='processing';
+    return `<div class="ord-card">
+      <div class="ord-card-l">
+        <div class="ord-card-num">#PM-${String(o.id).slice(0,8)} <span class="tariff-badge-sm ${tb.c}">${tb.l}</span></div>
+        <div class="ord-card-date">${fmtDateTime(o.created_at)}</div>
+        <div class="ord-card-params">🎙 ${VOICE[o.voice_type]||o.voice_type||'—'} · ${GEN[o.baby_gender]||''} · ${sc}</div>
+      </div>
+      <div class="ord-card-r">
+        <span class="status ${st.cls}">${st.icon} ${st.label}${pulse?'<span class="st-dots"><i></i><i></i><i></i></span>':''}</span>
+        <div class="ord-card-actions">
+          ${isDone ? `<a class="ord-dl" href="${o.file_url}" target="_blank" rel="noopener" download>⬇️ Скачать</a>` : ''}
+          <button class="btn-ghost ord-track" type="button" onclick="goTrack('${o.id}')">Отследить →</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return accShell(accStats(orders) + `<div class="orders-list">${cards}</div>
+    <div style="margin-top:18px;text-align:center"><button class="btn-ghost" type="button" onclick="accForget()" style="font-size:12px">Искать по другому email</button></div>`, email);
 }
 function renderAccount(){
   const view = document.getElementById('view-account');
   const email = getStoredEmail();
   if(!email){ view.innerHTML = accEmailForm(''); return; }
-  view.innerHTML = accShell('<div class="acc-loading">Загружаем ваши заказы…</div>');
+  view.innerHTML = accShell(accSkeleton(), email);
   accFetch(email);
 }
 async function accFetch(email){

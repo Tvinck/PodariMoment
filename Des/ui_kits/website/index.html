@@ -4223,6 +4223,15 @@ function validateGender(){
   if(email && email.value.trim() && !email.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)){
     markError(email,'Похоже, в адресе опечатка'); ok=false; firstBad=firstBad||email;
   }
+  const gdate = document.getElementById('gdate');
+  if(gdate && gdate.value){
+    const today = new Date(); today.setHours(0,0,0,0);
+    if(new Date(gdate.value) < today){ markError(gdate,'Дата праздника не может быть в прошлом'); ok=false; firstBad=firstBad||gdate; }
+  }
+  const gparents = document.getElementById('gparents');
+  if(gparents && gparents.value.trim() && gparents.value.trim().length < 2){
+    markError(gparents,'Минимум 2 символа'); ok=false; firstBad=firstBad||gparents;
+  }
   if(currentTariff()==='vip'){
     const survey = document.getElementById('gsurvey');
     if(survey && !survey.value.trim()){ markError(survey,'Для VIP заполните анкету о семье'); ok=false; firstBad=firstBad||survey; }

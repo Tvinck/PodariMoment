@@ -54,6 +54,14 @@ function parseScenario(scenario) {
   return { key: SCENARIO_KEY[label] || 'formal', custom };
 }
 
+/**
+ * @function buildText
+ * @description Собирает текст для TTS из данных заказа: подставляет
+ *              существительное по полу, имена родителей, дату; берёт свой
+ *              текст пользователя или шаблон по сценарию. = buildOrderText из ТЗ.
+ * @param {object} order — заказ (baby_gender, parent_names, party_date, scenario)
+ * @returns {string} готовый текст
+ */
 function buildText(order) {
   const noun = GENDER_NOUN[order.baby_gender] || 'малыш';
   const names = order.parent_names || 'дорогие родители';

@@ -1992,6 +1992,12 @@ const ACC_STATUS = {
   refunded:         {label:'Возврат',               cls:'s-refunded',   icon:'↩️'},
   failed:           {label:'Ошибка оплаты',         cls:'s-err',        icon:'❌'}
 };
+/**
+ * @function fmtDateTime
+ * @description Форматирует ISO-дату в «DD.MM.YYYY HH:mm».
+ * @param {string} iso — ISO-строка даты
+ * @returns {string} отформатированная дата или ''
+ */
 function fmtDateTime(iso){
   if(!iso) return '';
   const d = new Date(iso); if(isNaN(d)) return '';
@@ -2001,6 +2007,12 @@ function fmtDateTime(iso){
 function getStoredEmail(){
   try{ const u = JSON.parse(localStorage.getItem('pm_user')||'{}'); return (u.email||'').trim(); }catch(_){ return ''; }
 }
+/**
+ * @function accInitial
+ * @description Первая буква email в верхнем регистре — для аватара ЛК.
+ * @param {string} email
+ * @returns {string} одна заглавная буква или '?'
+ */
 function accInitial(email){ return (email||'?').trim().charAt(0).toUpperCase() || '?'; }
 function accName(email){ const n=(email||'').split('@')[0]||'друг'; return n.charAt(0).toUpperCase()+n.slice(1); }
 function accHeader(email){
@@ -2084,6 +2096,14 @@ function accOrdersHtml(orders, email){
   return accShell(accStats(orders) + `<div class="orders-list">${cards}</div>
     <div style="margin-top:18px;text-align:center"><button class="btn-ghost" type="button" onclick="accForget()" style="font-size:12px">Искать по другому email</button></div>`, email);
 }
+/**
+ * @function renderAccount
+ * @description Рендерит личный кабинет клиента. Без сохранённого email —
+ *              экран входа; иначе скелетон + загрузка заказов (accFetch).
+ * @calls accEmailForm(), accShell(), accSkeleton(), accFetch()
+ * @triggeredBy go('account') из роутера
+ * @sideEffects Перерисовывает #view-account
+ */
 function renderAccount(){
   const view = document.getElementById('view-account');
   const email = getStoredEmail();
@@ -2091,6 +2111,14 @@ function renderAccount(){
   view.innerHTML = accShell(accSkeleton(), email);
   accFetch(email);
 }
+/**
+ * @function accFetch
+ * @description Загружает заказы клиента по email (POST /api/my-orders) и
+ *              рендерит список/empty-state. Соответствует fetchMyOrders из ТЗ.
+ * @param {string} email
+ * @calls accOrdersHtml(), accEmpty(), accEmailForm()
+ * @sideEffects Сетевой запрос, перерисовка #view-account
+ */
 async function accFetch(email){
   const view = document.getElementById('view-account');
   try{
@@ -2124,6 +2152,14 @@ window.accLoadByInput = accLoadByInput; window.accForget = accForget;
 
 // === ТРЕКИНГ ЗАКАЗА (/track?order=...) ===
 function trackOrderId(){ return new URLSearchParams(location.search).get('order') || ''; }
+/**
+ * @function renderTrack
+ * @description Публичная страница трекинга заказа (/track?order=ID).
+ *              Читает orderId из query, грузит статус (trackFetch).
+ * @calls trackFetch(), trackHtml()
+ * @triggeredBy go('track') из роутера
+ * @sideEffects Перерисовывает #view-track
+ */
 function renderTrack(){
   const view = document.getElementById('view-track');
   const oid = trackOrderId();
@@ -2231,6 +2267,14 @@ const GENDER_LABEL = {boy:'💙 Мальчик', girl:'💗 Девочка', sur
 const VOICE_LABEL = {male:'Мужской', female:'Женский', child:'Детский'};
 function adminPwd(){ try{ return sessionStorage.getItem('pm_admin_pwd')||''; }catch(_){ return ''; } }
 
+/**
+ * @function renderAdmin
+ * @description Панель администратора. Нет пароля в sessionStorage — экран
+ *              логина; иначе топбар + скелетон + загрузка (adminFetchOrders).
+ * @calls adminLogin(), adminFetchOrders(), adminSkeleton()
+ * @triggeredBy go('admin') из роутера
+ * @sideEffects Перерисовывает #view-admin
+ */
 function renderAdmin(){
   const view = document.getElementById('view-admin');
   if(!adminPwd()){
@@ -2290,6 +2334,12 @@ async function adminLogin(){
   }catch(e){ fail('Сервис недоступен: '+e.message); }
 }
 function adminLogout(){ try{ sessionStorage.removeItem('pm_admin_pwd'); }catch(_){} renderAdmin(); }
+/**
+ * @function adminFetchOrders
+ * @description Загружает все заказы (POST /api/admin-orders с паролем) в
+ *              adminOrders и рендерит панель. Соответствует fetchAdminOrders.
+ * @sideEffects Сетевой запрос, мутация adminOrders, перерисовка #admin-shell
+ */
 async function adminFetchOrders(){
   try{
     const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})});
@@ -2404,6 +2454,13 @@ async function adminPatch(id, patch){
   if(!res.ok) throw new Error(data.error||'Ошибка');
   return data.order;
 }
+/**
+ * @function adminSetStatus
+ * @description Меняет статус заказа (PATCH через adminPatch → /api/admin-update),
+ *              частично перерисовывает таблицу + flash-анимация. = updateOrderStatus.
+ * @param {string} id — uuid заказа
+ * @param {string} status — новый payment_status
+ */
 async function adminSetStatus(id, status){
   try{
     const upd = await adminPatch(id, {status});
@@ -2432,6 +2489,12 @@ function adminOpenFileModal(id){
   m.style.display='flex'; document.body.classList.add('legal-open');
   setTimeout(()=>{const i=document.getElementById('admin-file-url');if(i)i.focus();},50);
 }
+/**
+ * @function adminSaveFile
+ * @description Прикрепляет ссылку на MP3 к заказу и ставит статус done
+ *              (PATCH /api/admin-update). Соответствует attachFile из ТЗ.
+ * @param {string} id — uuid заказа
+ */
 async function adminSaveFile(id){
   const inp = document.getElementById('admin-file-url');
   const err = document.getElementById('admin-file-error');
@@ -2475,6 +2538,12 @@ function adminConfirmGenerate(id){
     </div>`;
   m.style.display='flex'; document.body.classList.add('legal-open');
 }
+/**
+ * @function adminGenerate
+ * @description Ручной запуск TTS-генерации (POST /api/admin-generate).
+ *              Соответствует triggerGenerate из ТЗ. Закрывает модалку, обновляет статус.
+ * @param {string} id — uuid заказа
+ */
 async function adminGenerate(id){
   const err = document.getElementById('admin-gen-error');
   const go = document.getElementById('admin-gen-go');
@@ -2488,6 +2557,13 @@ async function adminGenerate(id){
     closeLegalModal(); renderAdminPanel();
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} if(go){go.disabled=false;go.textContent='Запустить →';} }
 }
+/**
+ * @function adminCheckStatus
+ * @description Опрашивает статус задачи Kie.ai (GET /api/admin-check-status),
+ *              финализирует при готовности. Соответствует checkGenerationStatus.
+ * @param {string} id — uuid заказа
+ * @param {HTMLElement} btn — кнопка (для spin-анимации)
+ */
 async function adminCheckStatus(id, btn){
   if(btn){ btn.disabled=true; btn.classList.add('spin'); }
   try{
@@ -2624,6 +2700,16 @@ function pathToRoute(path){
   if(v==='order' && parts[1]) out.prod = parts[1];
   return out;
 }
+/**
+ * @function go
+ * @description Главный SPA-роутер. Переключает view, обновляет URL
+ *              (pushState) и document.title, дёргает render-функции.
+ *              Соответствует router() из ТЗ.
+ * @param {string} v — имя вида (landing/order/account/admin/track/success/catalog)
+ * @param {object} [opts] — {prod, skipHistory, skipScroll}
+ * @calls renderAdmin(), renderAccount(), renderTrack(), burstConfetti()
+ * @sideEffects Меняет видимость #view-*, history, document.title
+ */
 function go(v, opts){
   opts = opts || {};
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
@@ -2684,6 +2770,14 @@ function buildProdTabs(){
   if(!window.PRODUCTS) return;
   document.getElementById('prod-tabs').innerHTML = PRODUCTS.map(p=>`<button class="tp" data-prod="${p.id}" type="button">${p.ic} ${p.name} · ${PRICES[p.id]} ₽</button>`).join('');
 }
+/**
+ * @function setProduct
+ * @description Рендерит форму заказа выбранного продукта (FORMS[prod]),
+ *              настраивает order-hero и инициализирует gender-форму.
+ *              Соответствует renderOrder(product) из ТЗ.
+ * @param {string} prod — id продукта ('gender' и др.)
+ * @sideEffects Перерисовывает #prod-fields, #order-hero
+ */
 function setProduct(prod){
   if(!window.FORMS) return;
   document.querySelectorAll('.tabs-pill .tp').forEach(t=>{
@@ -2946,6 +3040,13 @@ const LEGAL_DOCS = {
       <p>Деньги возвращаются на ту же карту через эквайринг Т-Банк в срок до <strong>10 рабочих дней</strong>.</p>`
   }
 };
+/**
+ * @function openLegalModal
+ * @description Открывает модалку (оферта/политика/возврат, а также
+ *              переиспользуется админкой для файла/генерации). = openModal из ТЗ.
+ * @param {string} type — ключ LEGAL_DOCS
+ * @sideEffects Показывает #legal-modal, блокирует скролл body
+ */
 function openLegalModal(type){
   const doc = LEGAL_DOCS[type]; if(!doc) return;
   const m = document.getElementById('legal-modal');
@@ -2955,6 +3056,10 @@ function openLegalModal(type){
   document.body.classList.add('legal-open');
   m.querySelector('.legal-modal-x').focus();
 }
+/**
+ * @function closeLegalModal
+ * @description Закрывает модалку и разблокирует скролл. = closeModal из ТЗ.
+ */
 function closeLegalModal(){
   const m = document.getElementById('legal-modal');
   if(m) m.style.display = 'none';

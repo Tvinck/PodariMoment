@@ -1113,6 +1113,15 @@ body.legal-open{overflow:hidden}
 /* === ЦЕНЫ === */
 .price-field{margin-top:8px}
 .price-field label{display:block;font-size:11px;opacity:0.55;margin-bottom:4px}
+/* === KIE.AI === */
+.kie-balance{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px;text-align:center;margin-bottom:16px}
+.kie-balance.kie-low{border-color:rgba(239,68,68,0.4);box-shadow:0 0 20px rgba(239,68,68,0.12)}
+.kie-balance.kie-mid{border-color:rgba(255,209,102,0.4)}
+.kie-bal-lab{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.5}
+.kie-bal-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:48px;font-weight:800;margin:8px 0}
+.kie-ok .kie-bal-num{color:#86efac}.kie-mid .kie-bal-num{color:var(--gold)}.kie-low .kie-bal-num{color:#fca5a5}
+.kie-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.kie-badge-red{background:rgba(239,68,68,0.18);color:#fca5a5}.kie-badge-gold{background:rgba(255,209,102,0.18);color:var(--gold)}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -2721,7 +2730,43 @@ async function promoToggle(id, active){
   catch(e){ showToast('Ошибка: '+e.message,'error'); }
 }
 window.pricingSave=pricingSave; window.promoModal=promoModal; window.promoCreate=promoCreate; window.promoToggle=promoToggle;
-async function renderKie(){ const s=document.getElementById('admin-shell'); if(s) s.innerHTML='<div class="admin-empty">Kie.ai…</div>'; }
+/**
+ * @function renderKie
+ * @description Вкладка «Kie.ai»: баланс кредитов, расход по заказам,
+ *              последние задачи генерации.
+ */
+async function renderKie(){
+  const shell = document.getElementById('admin-shell'); if(!shell) return;
+  try{
+    const d = await apiFetch('/api/admin-kie-stats?password='+encodeURIComponent(adminPwd()));
+    const c = d.credits;
+    let cls='kie-ok', badge='';
+    if(c!=null && c<100){ cls='kie-low'; badge='<span class="kie-badge kie-badge-red">Пополните</span>'; }
+    else if(c!=null && c<500){ cls='kie-mid'; badge='<span class="kie-badge kie-badge-gold">Заканчиваются</span>'; }
+    const balance = c!=null ? c.toLocaleString('ru') : '—';
+    const recent = (d.recent||[]).map(o=>`<div class="aord" style="grid-template-columns:1.2fr 1.6fr 1fr auto">
+      <div><b>#PM-${String(o.id).slice(0,8)}</b></div>
+      <div style="font-size:13px;opacity:0.7">${o.email||''}</div>
+      <div style="font-size:11px;font-family:'JetBrains Mono',monospace;opacity:0.6">${String(o.kie_task_id||'').slice(0,20)}</div>
+      <div class="aord-actions"><button class="aord-btn aord-check" title="Проверить" onclick="adminCheckStatus('${o.id}',this)">🔄</button></div>
+    </div>`).join('') || '<div class="admin-empty">Нет задач</div>';
+    shell.innerHTML = `
+      <div class="crm-toolbar"><h2 class="crm-title">Kie.ai</h2><button class="afilter" onclick="renderKie()">🔄 Обновить</button></div>
+      <div class="kie-balance ${cls}">
+        <div class="kie-bal-lab">Баланс кредитов ${badge}</div>
+        <div class="kie-bal-num">${balance}</div>
+        <a class="btn-ghost" href="https://kie.ai" target="_blank" rel="noopener" style="margin-top:8px;display:inline-block">Пополнить на kie.ai →</a>
+      </div>
+      <div class="fin-kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="fin-kpi"><div class="kpi-ico">🎙</div><div class="fin-kpi-num">${d.generated||0}</div><div class="kpi-lab">Сгенерировано</div></div>
+        <div class="fin-kpi"><div class="kpi-ico">🔋</div><div class="fin-kpi-num">${(d.spent||0).toLocaleString('ru')}</div><div class="kpi-lab">Расход кредитов (~${d.creditsPerOrder}/заказ)</div></div>
+        <div class="fin-kpi"><div class="kpi-ico">📦</div><div class="fin-kpi-num">${d.ordersLeft!=null?d.ordersLeft:'—'}</div><div class="kpi-lab">Осталось заказов</div></div>
+      </div>
+      <div class="crm-toolbar" style="margin-top:20px"><h2 class="crm-title" style="font-size:18px">Последние задачи</h2></div>
+      <div class="aord-list">${recent}</div>`;
+  }catch(e){ if(e.status===401){adminLogout();return;} shell.innerHTML=`<div class="field-error-msg" style="padding:24px;text-align:center">Ошибка: ${e.message}</div>`; }
+}
+window.renderKie=renderKie;
 window.renderFinance=renderFinance; window.renderPrompts=renderPrompts; window.renderVoices=renderVoices; window.renderPricing=renderPricing; window.renderKie=renderKie;
 
 const CRM_STAGES = [

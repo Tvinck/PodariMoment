@@ -987,6 +987,26 @@ body.legal-open{overflow:hidden}
 .admin-topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,3vw,28px);background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line);margin:-14px calc(-1*clamp(12px,3vw,28px)) 20px}
 .admin-topbar-brand{display:flex;align-items:center;gap:10px;font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:16px;letter-spacing:-0.02em}
 .admin-topbar-logo{font-size:20px}
+/* KPI-дашборд */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;position:relative;transition:border-color .3s}
+.kpi-ico{font-size:22px}
+.kpi-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:32px;font-weight:800;letter-spacing:-0.03em;margin:8px 0 4px;line-height:1}
+.kpi-lab{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.45}
+.kpi-trend{font-size:11px;opacity:0.55;margin-top:6px}
+.kpi-blue .kpi-num{color:#93c5fd}.kpi-gold .kpi-num{color:var(--gold)}.kpi-orange .kpi-num{color:var(--orange)}.kpi-green .kpi-num{color:#86efac}
+.kpi-alert{border-color:rgba(255,107,53,0.4);box-shadow:0 0 20px rgba(255,107,53,0.15)}
+.admin-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.admin-filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.admin-filters::-webkit-scrollbar{display:none}
+.afilter{padding:9px 16px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s}
+.afilter:hover{border-color:rgba(255,107,53,0.4)}
+.afilter.act{background:#fff;color:#0a0a0f;border-color:#fff}
+.admin-search{position:relative;flex:1;min-width:200px;max-width:320px}
+.admin-search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:0.5;font-size:13px}
+.admin-search-input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 16px 10px 40px;font-size:13px;color:#fff}
+.admin-search-input:focus{border-color:rgba(255,107,53,0.5);outline:none}
+@media (max-width:640px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.admin-search{max-width:none}}
 @media (max-width:640px){
   .acc-stats-row{grid-template-columns:1fr;gap:10px}
   .acc-avatar{width:60px;height:60px;font-size:26px}
@@ -2158,6 +2178,9 @@ let adminTab = 'orders';
 let adminOrderQuery = '';
 let adminFilter = 'all';
 let adminOrders = [];
+let adminSearch = '';
+let adminPage = 1;
+const ADMIN_PAGE_SIZE = 20;
 const ADMIN_PRICE = 599;
 const ADMIN_STATUS = {
   pending:          {label:'Ожидает оплаты',  cls:'s-pending'},
@@ -2242,35 +2265,50 @@ async function adminFetchOrders(){
 }
 function adminStats(){
   const today = new Date(); today.setHours(0,0,0,0);
-  const isToday = o => { const d=new Date(o.created_at); return !isNaN(d) && d>=today; };
+  const yest = new Date(today); yest.setDate(yest.getDate()-1);
   const paidish = o => ['paid','processing','done'].includes(o.payment_status);
-  const todayOrders = adminOrders.filter(isToday);
+  const todayOrders = adminOrders.filter(o=>{ const d=new Date(o.created_at); return !isNaN(d)&&d>=today; });
+  const yestOrders = adminOrders.filter(o=>{ const d=new Date(o.created_at); return !isNaN(d)&&d>=yest&&d<today; });
   const revenue = todayOrders.filter(paidish).length * ADMIN_PRICE;
   const awaiting = adminOrders.filter(o => o.payment_status==='paid' && !o.file_url).length;
-  return {todayCount: todayOrders.length, revenue, awaiting};
+  return {todayCount: todayOrders.length, yesterdayCount: yestOrders.length, revenue, awaiting};
 }
 function renderAdminPanel(){
   const shell = document.getElementById('admin-shell');
   if(!shell) return;
   const s = adminStats();
+  const kpi = (cls,ico,num,label,trend)=>`<div class="kpi ${cls}">
+    <div class="kpi-ico">${ico}</div>
+    <div class="kpi-num">${num}</div>
+    <div class="kpi-lab">${label}</div>
+    ${trend?`<div class="kpi-trend">${trend}</div>`:''}
+  </div>`;
   shell.innerHTML = `
-    <div class="admin-head">
-      <div><div class="kicker">Админ-панель</div><h2 style="font-size:clamp(28px,5vw,36px);font-weight:800;letter-spacing:-0.04em;margin:4px 0 0">Заказы</h2></div>
-      <div class="admin-stats">
-        <div class="astat"><div class="astat-num">${s.todayCount}</div><div class="astat-lab">сегодня</div></div>
-        <div class="astat"><div class="astat-num" style="color:#4ade80">${s.revenue.toLocaleString('ru')} ₽</div><div class="astat-lab">выручка сегодня</div></div>
-        <div class="astat"><div class="astat-num" style="color:var(--gold)">${s.awaiting}</div><div class="astat-lab">ждут обработки</div></div>
-        <div class="astat"><div class="astat-num">${adminOrders.length}</div><div class="astat-lab">всего</div></div>
-        <button class="btn-ghost" style="padding:8px 14px;font-size:12px;align-self:center" onclick="adminLogout()">Выйти</button>
-      </div>
+    <div class="kpi-grid">
+      ${kpi('kpi-blue','🛍️', s.todayCount, 'Заказов сегодня', s.yesterdayCount!=null?`${s.todayCount-s.yesterdayCount>=0?'+':''}${s.todayCount-s.yesterdayCount} за вчера`:'')}
+      ${kpi('kpi-gold','💰', s.revenue.toLocaleString('ru')+' ₽', 'Выручка сегодня', '')}
+      ${kpi('kpi-orange'+(s.awaiting>0?' kpi-alert':''),'⚠️', s.awaiting, 'Ждут обработки', '')}
+      ${kpi('kpi-green','📊', adminOrders.length, 'Всего заказов', '')}
     </div>
-    <div class="admin-filters">
-      ${[['all','Все'],['pending','Ожидают'],['paid','Оплачены'],['done','Готовы'],['refunded','Возвраты']].map(([k,l])=>
-        `<button class="afilter${adminFilter===k?' act':''}" onclick="adminSetFilter('${k}')">${l}</button>`).join('')}
+    <div class="admin-toolbar">
+      <div class="admin-filters">
+        ${[['all','Все'],['pending','Ожидают'],['paid','Оплачены'],['done','Готовы'],['failed','Ошибки']].map(([k,l])=>
+          `<button class="afilter${adminFilter===k?' act':''}" onclick="adminSetFilter('${k}')">${l}</button>`).join('')}
+      </div>
+      <div class="admin-search">
+        <span class="admin-search-ico">🔍</span>
+        <input class="admin-search-input" id="admin-search-input" placeholder="Поиск по email или номеру..." value="${adminSearch}" oninput="adminDoSearch(this.value)">
+      </div>
     </div>
     <div id="admin-orders-table">${renderAdminOrdersTable()}</div>`;
 }
-function adminSetFilter(f){ adminFilter=f; renderAdminPanel(); }
+function adminSetFilter(f){ adminFilter=f; adminPage=1; renderAdminPanel(); }
+function adminDoSearch(v){
+  adminSearch=v; adminPage=1;
+  const box = document.getElementById('admin-orders-table');
+  if(box) box.innerHTML = renderAdminOrdersTable();
+}
+window.adminSetFilter = adminSetFilter; window.adminDoSearch = adminDoSearch;
 function renderAdminOrdersTable(){
   let list = adminOrders;
   if(adminFilter==='pending') list = list.filter(o=>o.payment_status==='pending');

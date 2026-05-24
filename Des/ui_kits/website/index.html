@@ -1168,6 +1168,14 @@ body.legal-open{overflow:hidden}
 .promo-ok{color:#86efac;font-weight:600}
 .promo-bad{color:#fca5a5;font-weight:600}
 .promo-loading{opacity:0.6}
+/* === TELEGRAM FAB === */
+.tg-fab{position:fixed;bottom:24px;right:24px;z-index:100;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2AABEE,#229ED9);box-shadow:0 4px 20px rgba(42,171,238,0.4);display:grid;place-items:center;transition:transform .2s var(--spring);text-decoration:none}
+.tg-fab:hover{transform:scale(1.1)}
+.tg-fab svg{width:28px;height:28px;margin-left:-2px}
+.tg-fab-tip{position:absolute;right:68px;bottom:50%;transform:translateY(50%);background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:13px;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity .3s}
+.tg-fab-tip.show{opacity:1}
+body.admin-view .tg-fab{display:none}
+@media (max-width:640px){.tg-fab{bottom:80px;width:50px;height:50px}.tg-fab svg{width:24px;height:24px}}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -1561,6 +1569,11 @@ body.legal-open{overflow:hidden}
 </div>
 
 <div class="dock" id="dock"></div>
+
+<a class="tg-fab" id="tg-fab" href="https://t.me/podarimoment" target="_blank" rel="noopener" aria-label="Написать в Telegram">
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21.9 4.3 18.9 19c-.2 1-.8 1.2-1.7.8l-4.6-3.4-2.2 2.1c-.3.3-.5.5-1 .5l.3-4.7L18.3 6c.4-.3-.1-.5-.6-.2L7.1 12.6l-4.5-1.4c-1-.3-1-1 .2-1.4L20.6 3c.8-.3 1.5.2 1.3 1.3Z" fill="#fff"/></svg>
+  <span class="tg-fab-tip" id="tg-fab-tip">Есть вопросы? Пишите нам!</span>
+</a>
 
 <button class="fab" id="fab" title="Поддержка">
   <span class="fab-ring"></span>
@@ -3574,6 +3587,15 @@ function createCache(ttl=60000){
     }).catch(()=>{});
   }catch(e){}
 })();
+// Telegram-tooltip при первом визите
+(function(){
+  try{
+    if(!localStorage.getItem('pm_tg_seen')){
+      setTimeout(()=>{ const t=document.getElementById('tg-fab-tip'); if(t){ t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),5000);} }, 2000);
+      localStorage.setItem('pm_tg_seen','1');
+    }
+  }catch(e){}
+})();
 const ordersCache = createCache(30000);
 const crmCache = createCache(60000);
 window.showToast = showToast;
@@ -3649,6 +3671,7 @@ function go(v, opts){
   if(v==='track') track('view_track');
   if(v==='success'){ burstConfetti(); track('purchase',{order_id:(new URLSearchParams(location.search).get('orderId')||'')}); }
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
+  document.body.classList.toggle('admin-view', v==='admin');
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');
   const bg=document.getElementById('burger');if(bg)bg.classList.remove('open');
   if(!opts.skipScroll) window.scrollTo({top:0,behavior:'smooth'});

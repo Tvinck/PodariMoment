@@ -1065,6 +1065,26 @@ body.legal-open{overflow:hidden}
 .crm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
 .crm-reasons{font-size:13px;line-height:1.4;opacity:0.85;margin:6px 0 4px}
 @media (max-width:640px){.crm-stats{grid-template-columns:1fr}}
+/* === DRAWER деталей заказа === */
+.order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
+.order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
+.order-drawer.open{pointer-events:auto}
+.order-drawer.open .drw-backdrop{opacity:1}
+.drw-panel{position:absolute;top:0;right:0;height:100%;width:400px;max-width:90vw;background:var(--bg2);border-left:1px solid var(--line);padding:28px;overflow-y:auto;transform:translateX(100%);transition:transform .35s var(--spring);box-shadow:-20px 0 60px rgba(0,0,0,0.5)}
+.order-drawer.open .drw-panel{transform:translateX(0)}
+.drw-x{position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:#fff;font-size:20px;cursor:pointer}
+.drw-num{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:22px;color:var(--gold);margin-bottom:8px}
+.drw-block{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.drw-row{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
+.drw-row span{opacity:0.55}
+.drw-sub{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;opacity:0.45;margin:18px 0 8px}
+.drw-script{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;line-height:1.5;opacity:0.85}
+.drw-history{display:flex;flex-direction:column;gap:12px}
+.drw-hist{display:flex;gap:10px;align-items:flex-start}
+.drw-dot{width:10px;height:10px;border-radius:50%;background:var(--grad);margin-top:4px;flex-shrink:0}
+.drw-hist-t{font-size:12px;opacity:0.5}
+.drw-err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:12px;font-size:12px;color:#fca5a5}
+@media (max-width:640px){.drw-panel{width:100%}}
 @media (max-width:640px){
   .aord{grid-template-columns:1fr 1fr;gap:10px}
   .aord-email{grid-column:1/-1}
@@ -2580,6 +2600,7 @@ function renderAdminPanel(){
         <span class="admin-search-ico">🔍</span>
         <input class="admin-search-input" id="admin-search-input" placeholder="Поиск по email или номеру..." value="${adminSearch}" oninput="adminDoSearch(this.value)">
       </div>
+      <button class="afilter" type="button" onclick="exportToCSV()">📥 Экспорт CSV</button>
     </div>
     <div id="admin-orders-table">${renderAdminOrdersTable()}</div>`;
 }
@@ -2602,6 +2623,76 @@ function adminFilteredOrders(){
 }
 function adminLoadMore(){ adminPage++; const box=document.getElementById('admin-orders-table'); if(box) box.innerHTML = renderAdminOrdersTable(); }
 window.adminLoadMore = adminLoadMore;
+
+/**
+ * @function exportToCSV
+ * @description Выгружает текущий (отфильтрованный) список заказов в CSV
+ *              на клиенте, с BOM для Excel. Разделитель — точка с запятой.
+ */
+function exportToCSV(){
+  const list = adminFilteredOrders();
+  const headers = ['ID','Email','Тариф','Пол','Голос','Сценарий','Дата праздника','Сумма','Статус','Дата заказа','Дата оплаты','Дата готовности'];
+  const esc = v => '"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows = list.map(o=>[
+    o.id, o.email, o.tariff||'', GENDER_LABEL[o.baby_gender]||o.baby_gender||'',
+    VOICE_LABEL[o.voice_type]||o.voice_type||'', (o.scenario||'').split(' — ')[0],
+    o.party_date||'', ADMIN_PRICE, (ADMIN_STATUS[o.payment_status]||{}).label||o.payment_status,
+    fmtDateTime(o.created_at), fmtDateTime(o.paid_at), fmtDateTime(o.done_at)
+  ].map(esc).join(';'));
+  const csv = [headers.map(esc).join(';'), ...rows].join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `podarimoment-orders-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+window.exportToCSV = exportToCSV;
+
+/**
+ * @function openOrderDrawer
+ * @description Боковая панель (drawer) с полными деталями заказа.
+ * @param {string} id — uuid заказа
+ */
+function openOrderDrawer(id){
+  const o = adminOrders.find(x=>x.id===id); if(!o) return;
+  const st = ADMIN_STATUS[o.payment_status]||{label:o.payment_status,cls:''};
+  const tb = {basic:'Базовый',premium:'Премиум',vip:'VIP'}[o.tariff]||'Премиум';
+  const row = (k,v)=>`<div class="drw-row"><span>${k}</span><b>${v||'—'}</b></div>`;
+  const hist = [
+    ['Создан', o.created_at],['Оплачен', o.paid_at],['Готов', o.done_at]
+  ].filter(([,t])=>t).map(([l,t])=>`<div class="drw-hist"><span class="drw-dot"></span><div><b>${l}</b><div class="drw-hist-t">${fmtDateTime(t)}</div></div></div>`).join('');
+  let d = document.getElementById('order-drawer');
+  if(!d){ d=document.createElement('div'); d.id='order-drawer'; d.className='order-drawer'; document.body.appendChild(d); }
+  d.innerHTML = `<div class="drw-backdrop" onclick="closeOrderDrawer()"></div>
+    <div class="drw-panel">
+      <button class="drw-x" onclick="closeOrderDrawer()">×</button>
+      <div class="drw-num">#PM-${String(o.id).slice(0,8)}</div>
+      <span class="status ${st.cls}">${st.label}</span>
+      <div class="drw-block">
+        ${row('Email', o.email)}
+        ${row('Тариф', tb)}
+        ${row('Сумма', ADMIN_PRICE+' ₽')}
+        ${row('Пол', GENDER_LABEL[o.baby_gender]||o.baby_gender)}
+        ${row('Голос', VOICE_LABEL[o.voice_type]||o.voice_type)}
+        ${row('Дата праздника', o.party_date)}
+        ${row('Имена родителей', o.parent_names)}
+      </div>
+      <div class="drw-sub">Сценарий</div>
+      <div class="drw-script">${o.scenario||'—'}</div>
+      ${o.file_url?`<a class="ord-dl" href="${o.file_url}" target="_blank" rel="noopener" style="margin-top:12px;display:inline-block">⬇️ Файл</a>`:''}
+      <div class="drw-sub">История</div>
+      <div class="drw-history">${hist||'<div style="opacity:0.4;font-size:13px">—</div>'}</div>
+      ${o.error_log?`<div class="drw-sub">Ошибка</div><div class="drw-err">${o.error_log}</div>`:''}
+    </div>`;
+  requestAnimationFrame(()=>d.classList.add('open'));
+}
+function closeOrderDrawer(){ const d=document.getElementById('order-drawer'); if(d){ d.classList.remove('open'); } }
+function adminCardClick(e, id){
+  if(e.target.closest('button, select, a')) return; // клик по элементу управления — не открываем
+  openOrderDrawer(id);
+}
+window.openOrderDrawer=openOrderDrawer; window.closeOrderDrawer=closeOrderDrawer; window.adminCardClick=adminCardClick;
 function renderAdminOrdersTable(){
   const full = adminFilteredOrders();
   if(full.length===0) return '<div class="admin-empty">Заказов нет</div>';
@@ -2610,7 +2701,7 @@ function renderAdminOrdersTable(){
     const canGen = (o.payment_status==='paid' || o.payment_status==='generation_failed') && !o.file_url;
     const canCheck = o.payment_status==='processing';
     const tb = {basic:{l:'Базовый',c:'tb-basic'},premium:{l:'Премиум',c:'tb-premium'},vip:{l:'VIP',c:'tb-vip'}}[o.tariff]||{l:'Премиум',c:'tb-premium'};
-    return `<div class="aord" id="aord-${o.id}">
+    return `<div class="aord" id="aord-${o.id}" onclick="adminCardClick(event,'${o.id}')">
       <div class="aord-c aord-num">
         <div class="ord-card-num">#PM-${String(o.id).slice(0,8)}</div>
         <span class="tariff-badge-sm ${tb.c}">${tb.l}</span>

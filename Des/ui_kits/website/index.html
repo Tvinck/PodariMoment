@@ -1122,6 +1122,13 @@ body.legal-open{overflow:hidden}
 .kie-ok .kie-bal-num{color:#86efac}.kie-mid .kie-bal-num{color:var(--gold)}.kie-low .kie-bal-num{color:#fca5a5}
 .kie-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;margin-left:8px;vertical-align:middle}
 .kie-badge-red{background:rgba(239,68,68,0.18);color:#fca5a5}.kie-badge-gold{background:rgba(255,209,102,0.18);color:var(--gold)}
+/* === ПРОМОКОД В ФОРМЕ === */
+.promo-row{display:flex;gap:8px}
+.promo-row .input{flex:1}
+.promo-status{margin-top:6px;font-size:12px;min-height:16px}
+.promo-ok{color:#86efac;font-weight:600}
+.promo-bad{color:#fca5a5;font-weight:600}
+.promo-loading{opacity:0.6}
 /* === DRAWER деталей заказа === */
 .order-drawer{position:fixed;inset:0;z-index:1100;pointer-events:none}
 .order-drawer .drw-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);opacity:0;transition:opacity .3s}
@@ -2014,7 +2021,11 @@ const FORMS = {
         <div class="field-help">Готовый MP3/MP4 придёт в течение 5 минут после оплаты. Ссылка живёт 30 дней.</div>
       </div>
       <div class="field" style="margin-top:14px"><label>Промокод — необязательно</label>
-        <input class="input" id="gpromo" placeholder="Если есть — введите здесь">
+        <div class="promo-row">
+          <input class="input" id="gpromo" placeholder="Если есть — введите здесь" oninput="this.value=this.value.toUpperCase()">
+          <button class="btn-ghost" type="button" id="gpromo-btn" onclick="applyPromo()">Применить</button>
+        </div>
+        <div class="promo-status" id="gpromo-status"></div>
       </div>
     </div>
 
@@ -3759,18 +3770,49 @@ function applyTariff(){
   }
   const survey = document.getElementById('gstep-survey');
   if(survey) survey.style.display = (t==='vip') ? '' : 'none';
+  // Промокод пересчитывается под новый тариф — сбрасываем применённую скидку
+  if(promoState){ promoState=null; const st=document.getElementById('gpromo-status'); if(st) st.innerHTML='<span class="promo-loading">Тариф изменён — примените промокод заново</span>'; }
 }
+let promoState = null; // { code, discount_amount, new_price } если применён
 function recalcGenderPrice(){
   const t = currentTariff();
-  const price = (TARIFFS[t]||TARIFFS.premium).price;
+  const base = (TARIFFS[t]||TARIFFS.premium).price;
+  const price = (promoState && promoState.new_price!=null) ? promoState.new_price : base;
   const sum = document.getElementById('gprice-sum');
   const addEl = document.getElementById('gprice-add');
   if(sum) sum.textContent = price + ' ₽';
-  if(addEl) addEl.textContent = 'тариф «' + (TARIFFS[t]||{}).label + '»';
+  if(addEl) addEl.textContent = promoState ? `−${promoState.discount_amount} ₽ по «${promoState.code}»` : 'тариф «' + (TARIFFS[t]||{}).label + '»';
   const op = document.getElementById('op'); if(op) op.textContent = price;
   const payBtn = document.getElementById('gender-pay-btn'); if(payBtn) payBtn.textContent = `Оплатить ${price} ₽ →`;
   const heroPrice = document.querySelector('.order-hero-priceval'); if(heroPrice) heroPrice.textContent = price + ' ₽';
 }
+/**
+ * @function applyPromo
+ * @description Проверяет промокод (POST /api/validate-promo) и применяет
+ *              скидку к цене заказа. Показывает зелёный/красный статус.
+ */
+async function applyPromo(){
+  const inp = document.getElementById('gpromo');
+  const st = document.getElementById('gpromo-status');
+  const btn = document.getElementById('gpromo-btn');
+  const code = (inp&&inp.value||'').trim();
+  if(!code){ promoState=null; if(st) st.innerHTML=''; recalcGenderPrice(); return; }
+  if(st) st.innerHTML='<span class="promo-loading">Проверяем…</span>';
+  if(btn) btn.disabled=true;
+  try{
+    const d = await apiFetch('/api/validate-promo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code, tariff:currentTariff()})}, 1);
+    if(d.valid){
+      promoState = { code, discount_amount:d.discount_amount, new_price:d.new_price };
+      const label = d.discount_type==='percent' ? `−${d.discount_value}%` : `−${d.discount_value} ₽`;
+      if(st) st.innerHTML=`<span class="promo-ok">✅ ${label} применено</span>`;
+    } else {
+      promoState = null;
+      if(st) st.innerHTML=`<span class="promo-bad">❌ ${d.error||'Код не найден'}</span>`;
+    }
+  }catch(e){ promoState=null; if(st) st.innerHTML=`<span class="promo-bad">❌ ${e.message}</span>`; }
+  finally{ if(btn) btn.disabled=false; recalcGenderPrice(); }
+}
+window.applyPromo=applyPromo;
 
 // Demo audio player
 function fmtTime(s){ s=Math.floor(s||0); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -4144,7 +4186,8 @@ function collectGenderOrder(){
     parent_names: (document.getElementById('gparents')||{}).value || '',
     party_date: (document.getElementById('gdate')||{}).value || '',
     email: (document.getElementById('gemail')||{}).value || '',
-    promo_code: (document.getElementById('gpromo')||{}).value || ''
+    promo_code: (promoState && promoState.code) || ((document.getElementById('gpromo')||{}).value || ''),
+    discount_amount: (promoState && promoState.discount_amount) || 0
   };
 }
 

@@ -45,12 +45,31 @@ module.exports = async (req, res) => {
   }
 
   const tariff = TARIFF_KOPECKS[order.tariff] ? order.tariff : 'premium';
-  const amount = TARIFF_KOPECKS[tariff];
+  let amount = TARIFF_KOPECKS[tariff];
   const orderId = randomUUID();
+
+  // Промокод: пересчитываем скидку на сервере (нельзя доверять клиенту)
+  let discountKop = 0;
+  let promoApplied = null;
+  const sb = getAdminClient();
+  if (order.promo_code) {
+    try {
+      const { data: promo } = await sb.from('promo_codes').select('*').eq('code', String(order.promo_code).trim().toUpperCase()).single();
+      const valid = promo && promo.is_active
+        && (!promo.valid_until || new Date(promo.valid_until) >= new Date())
+        && (!promo.max_uses || promo.max_uses <= 0 || promo.uses_count < promo.max_uses);
+      if (valid) {
+        discountKop = promo.discount_type === 'percent'
+          ? Math.round(amount * promo.discount_value / 100)
+          : Math.min(promo.discount_value * 100, amount - 100);
+        amount = Math.max(100, amount - discountKop);
+        promoApplied = promo;
+      }
+    } catch { /* промокод невалиден — игнорируем */ }
+  }
 
   // 1. Записываем заказ как pending
   try {
-    const sb = getAdminClient();
     const { error } = await sb.from('orders').insert({
       id: orderId,
       product: 'gender',
@@ -62,10 +81,14 @@ module.exports = async (req, res) => {
       parent_names: order.parent_names,
       party_date: order.party_date,
       email,
-      promo_code: order.promo_code || null,
+      promo_code: promoApplied ? promoApplied.code : null,
+      discount_amount: Math.round(discountKop / 100),
       payment_status: 'pending',
     });
     if (error) throw error;
+    if (promoApplied) {
+      try { await sb.from('promo_codes').update({ uses_count: (promoApplied.uses_count || 0) + 1 }).eq('id', promoApplied.id); } catch {}
+    }
   } catch (e) {
     res.status(500).json({ error: 'Не удалось сохранить заказ' }); return;
   }

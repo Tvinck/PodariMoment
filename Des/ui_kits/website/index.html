@@ -1007,6 +1007,32 @@ body.legal-open{overflow:hidden}
 .admin-search-input{width:100%;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 16px 10px 40px;font-size:13px;color:#fff}
 .admin-search-input:focus{border-color:rgba(255,107,53,0.5);outline:none}
 @media (max-width:640px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.admin-search{max-width:none}}
+/* карточки заказов админки */
+.aord-list{display:flex;flex-direction:column;gap:8px}
+.aord{display:grid;grid-template-columns:1.3fr 1.6fr 2fr 1.2fr 1.4fr auto;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 20px;transition:all .2s}
+.aord:hover{border-color:rgba(255,255,255,0.16)}
+.aord.flash{animation:aordFlash 1s var(--spring)}
+@keyframes aordFlash{0%{background:rgba(255,107,53,0.18)}100%{background:var(--card)}}
+.aord .ord-card-num{font-size:15px}
+.aord-email{font-size:13px;opacity:0.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aord-params{display:flex;flex-direction:column;gap:3px;font-size:12px;opacity:0.7}
+.aord-date{font-size:12px;opacity:0.55;white-space:nowrap}
+.aord-actions{display:flex;gap:6px}
+.aord-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.06);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:all .2s;position:relative}
+.aord-btn:hover{transform:translateY(-1px)}
+.aord-gen{background:rgba(255,107,53,0.15);color:var(--orange)}.aord-gen:hover{background:rgba(255,107,53,0.3)}
+.aord-check{background:rgba(255,209,102,0.1);color:var(--gold)}
+.aord-check.spin{animation:spin 0.8s linear infinite}
+.admin-status-sel{font:inherit;font-size:12px;font-weight:700;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:#fff;cursor:pointer;max-width:100%}
+.admin-more{display:block;margin:16px auto 0;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .2s}
+.admin-more:hover{border-color:rgba(255,107,53,0.4)}
+.admin-empty{padding:48px;text-align:center;opacity:0.5;font-size:14px}
+@media (max-width:640px){
+  .aord{grid-template-columns:1fr 1fr;gap:10px}
+  .aord-email{grid-column:1/-1}
+  .aord-params{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;gap:10px}
+  .aord-actions{grid-column:1/-1;justify-content:flex-start}
+}
 @media (max-width:640px){
   .acc-stats-row{grid-template-columns:1fr;gap:10px}
   .acc-avatar{width:60px;height:60px;font-size:26px}
@@ -2309,40 +2335,53 @@ function adminDoSearch(v){
   if(box) box.innerHTML = renderAdminOrdersTable();
 }
 window.adminSetFilter = adminSetFilter; window.adminDoSearch = adminDoSearch;
-function renderAdminOrdersTable(){
+function adminFilteredOrders(){
   let list = adminOrders;
   if(adminFilter==='pending') list = list.filter(o=>o.payment_status==='pending');
   else if(adminFilter==='paid') list = list.filter(o=>['paid','processing'].includes(o.payment_status));
   else if(adminFilter==='done') list = list.filter(o=>o.payment_status==='done');
-  else if(adminFilter==='refunded') list = list.filter(o=>['refunded','failed'].includes(o.payment_status));
-  if(list.length===0) return '<div style="padding:40px;text-align:center;opacity:0.5;font-size:14px">Заказов нет</div>';
-  return `<div class="atable-wrap"><table class="atable"><thead><tr>
-    <th>№</th><th>Продукт</th><th>Email</th><th>Пол</th><th>Голос</th><th>Дата праздника</th><th>Сумма</th><th>Статус</th><th>Создан</th><th>Действия</th>
-  </tr></thead><tbody>
-    ${list.map(o=>{
-      const canGen = (o.payment_status==='paid' || o.payment_status==='generation_failed') && !o.file_url;
-      const canCheck = o.payment_status==='processing';
-      return `<tr>
-      <td><b>${String(o.id).slice(0,8)}</b></td>
-      <td>Гендер-пати</td>
-      <td style="opacity:0.7">${o.email||''}</td>
-      <td>${GENDER_LABEL[o.baby_gender]||o.baby_gender||''}</td>
-      <td>${VOICE_LABEL[o.voice_type]||o.voice_type||''}</td>
-      <td style="opacity:0.7">${o.party_date||'—'}</td>
-      <td><b>${ADMIN_PRICE} ₽</b></td>
-      <td>
-        <select class="admin-status-sel ${ (ADMIN_STATUS[o.payment_status]||{}).cls||'' }" onchange="adminSetStatus('${o.id}', this.value)">
+  else if(adminFilter==='failed') list = list.filter(o=>['generation_failed','failed','refunded'].includes(o.payment_status));
+  const q = adminSearch.trim().toLowerCase();
+  if(q) list = list.filter(o => (o.email||'').toLowerCase().includes(q) || String(o.id).toLowerCase().includes(q));
+  return list;
+}
+function adminLoadMore(){ adminPage++; const box=document.getElementById('admin-orders-table'); if(box) box.innerHTML = renderAdminOrdersTable(); }
+window.adminLoadMore = adminLoadMore;
+function renderAdminOrdersTable(){
+  const full = adminFilteredOrders();
+  if(full.length===0) return '<div class="admin-empty">Заказов нет</div>';
+  const shown = full.slice(0, adminPage*ADMIN_PAGE_SIZE);
+  const cards = shown.map(o=>{
+    const canGen = (o.payment_status==='paid' || o.payment_status==='generation_failed') && !o.file_url;
+    const canCheck = o.payment_status==='processing';
+    const tb = {basic:{l:'Базовый',c:'tb-basic'},premium:{l:'Премиум',c:'tb-premium'},vip:{l:'VIP',c:'tb-vip'}}[o.tariff]||{l:'Премиум',c:'tb-premium'};
+    return `<div class="aord" id="aord-${o.id}">
+      <div class="aord-c aord-num">
+        <div class="ord-card-num">#PM-${String(o.id).slice(0,8)}</div>
+        <span class="tariff-badge-sm ${tb.c}">${tb.l}</span>
+      </div>
+      <div class="aord-c aord-email">${o.email||''}</div>
+      <div class="aord-c aord-params">
+        <span>${GENDER_LABEL[o.baby_gender]||o.baby_gender||''}</span>
+        <span>🎙 ${VOICE_LABEL[o.voice_type]||o.voice_type||'—'}</span>
+        <span>📅 ${o.party_date||'—'}</span>
+      </div>
+      <div class="aord-c aord-date">${fmtDateTime(o.created_at)}</div>
+      <div class="aord-c aord-status">
+        <select class="admin-status-sel ${(ADMIN_STATUS[o.payment_status]||{}).cls||''}" onchange="adminSetStatus('${o.id}', this.value)">
           ${ADMIN_STATUS_ORDER.map(st=>`<option value="${st}" ${o.payment_status===st?'selected':''}>${ADMIN_STATUS[st].label}</option>`).join('')}
         </select>
-      </td>
-      <td style="opacity:0.6;white-space:nowrap">${fmtDateTime(o.created_at)}</td>
-      <td><div class="admin-actions">
-        ${canGen ? `<button class="btn-mini btn-mini-orange" onclick="adminConfirmGenerate('${o.id}')">🎙 Сгенерировать</button>` : ''}
-        ${canCheck ? `<button class="btn-mini" onclick="adminCheckStatus('${o.id}', this)">🔄 Статус</button>` : ''}
-        <button class="btn-mini ${o.file_url?'btn-mini-orange':''}" onclick="adminOpenFileModal('${o.id}')">📎 Файл</button>
-      </div></td>
-    </tr>`;}).join('')}
-  </tbody></table></div>`;
+      </div>
+      <div class="aord-c aord-actions">
+        ${canGen ? `<button class="aord-btn aord-gen" title="Сгенерировать" onclick="adminConfirmGenerate('${o.id}')">🎙</button>` : ''}
+        ${canCheck ? `<button class="aord-btn aord-check" title="Проверить статус" onclick="adminCheckStatus('${o.id}', this)">🔄</button>` : ''}
+        <button class="aord-btn aord-file" title="Загрузить файл" onclick="adminOpenFileModal('${o.id}')">📎</button>
+      </div>
+    </div>`;
+  }).join('');
+  const more = full.length > shown.length
+    ? `<button class="admin-more" type="button" onclick="adminLoadMore()">Загрузить ещё (${full.length-shown.length})</button>` : '';
+  return `<div class="aord-list">${cards}</div>${more}`;
 }
 async function adminPatch(id, patch){
   const res = await fetch('/api/admin-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd(), id, ...patch})});
@@ -2355,7 +2394,9 @@ async function adminSetStatus(id, status){
   try{
     const upd = await adminPatch(id, {status});
     const i = adminOrders.findIndex(o=>o.id===id); if(i>=0 && upd) adminOrders[i]=upd;
-    renderAdminPanel();
+    const box = document.getElementById('admin-orders-table');
+    if(box) box.innerHTML = renderAdminOrdersTable();
+    const card = document.getElementById('aord-'+id); if(card){ card.classList.add('flash'); }
   }catch(e){ alert('Не удалось сменить статус: '+e.message); }
 }
 function adminOpenFileModal(id){

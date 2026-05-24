@@ -1102,6 +1102,19 @@ body.legal-open{overflow:hidden}
 .tl2-time{font-size:12px;color:var(--gold);margin-top:2px}
 .tl2-desc{font-size:12px;opacity:0.55;margin-top:3px}
 @media (prefers-reduced-motion: reduce){.tl2-current .tl2-dot{animation:none}}
+/* === ERROR BOUNDARY + TOASTS === */
+.error-boundary{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:80px 24px;max-width:480px;margin:0 auto}
+.eb-icon{font-size:64px;animation:wiggle 2s ease-in-out infinite}
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9998;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--card2);border-radius:14px;padding:14px 18px;border:1px solid var(--line);display:flex;align-items:center;gap:12px;min-width:280px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:toastIn .3s var(--spring);pointer-events:all;font-size:14px}
+.toast-msg{flex:1}
+.toast-success{border-left:3px solid #86efac}
+.toast-error{border-left:3px solid #fca5a5}
+.toast-warning{border-left:3px solid var(--gold)}
+.toast-info{border-left:3px solid var(--orange)}
+@keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
+@media (max-width:640px){.toast-container{left:16px;right:16px;bottom:16px}.toast{min-width:0;max-width:none}}
 @media (max-width:640px){
   .aord{grid-template-columns:1fr 1fr;gap:10px}
   .aord-email{grid-column:1/-1}
@@ -2477,7 +2490,7 @@ async function crmMove(id, stage){
     const data = await res.json(); if(!res.ok) throw new Error(data.error||'Ошибка');
     const i = crmLeads.findIndex(l=>l.id===id); if(i>=0) crmLeads[i]=data.lead;
     renderCrmBoard();
-  }catch(e){ alert('Не удалось переместить: '+e.message); }
+  }catch(e){ showToast('Не удалось переместить: '+e.message,'error'); }
 }
 /**
  * @function crmOpenModal
@@ -2835,7 +2848,8 @@ async function adminSetStatus(id, status){
     const box = document.getElementById('admin-orders-table');
     if(box) box.innerHTML = renderAdminOrdersTable();
     const card = document.getElementById('aord-'+id); if(card){ card.classList.add('flash'); }
-  }catch(e){ alert('Не удалось сменить статус: '+e.message); }
+    showToast('Статус обновлён','success');
+  }catch(e){ showToast('Не удалось сменить статус: '+e.message,'error'); }
 }
 function adminOpenFileModal(id){
   const o = adminOrders.find(x=>x.id===id);
@@ -2870,7 +2884,7 @@ async function adminSaveFile(id){
   try{
     const upd = await adminPatch(id, {file_url:url, status:'done'});
     const i = adminOrders.findIndex(o=>o.id===id); if(i>=0 && upd) adminOrders[i]=upd;
-    closeLegalModal(); renderAdminPanel();
+    closeLegalModal(); renderAdminPanel(); showToast('Файл прикреплён','success');
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
 }
 // Превью текста сценария (зеркалит шаблоны из api/_generateVoice.js)
@@ -2921,7 +2935,7 @@ async function adminGenerate(id){
     const data = await res.json();
     if(!res.ok) throw new Error(data.error||'Ошибка');
     const o = adminOrders.find(x=>x.id===id); if(o){ o.payment_status='processing'; o.kie_task_id=data.task_id; }
-    closeLegalModal(); renderAdminPanel();
+    closeLegalModal(); renderAdminPanel(); showToast('Генерация запущена','success');
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} if(go){go.disabled=false;go.textContent='Запустить →';} }
 }
 /**
@@ -2941,7 +2955,7 @@ async function adminCheckStatus(id, btn){
     const o = adminOrders.find(x=>x.id===id);
     if(o){ if(data.status) o.payment_status=data.status; if(data.file_url) o.file_url=data.file_url; }
     const box = document.getElementById('admin-orders-table'); if(box) box.innerHTML = renderAdminOrdersTable();
-  }catch(e){ alert('Не удалось проверить статус: '+e.message); if(btn){btn.disabled=false;btn.classList.remove('spin');} }
+  }catch(e){ showToast('Не удалось проверить статус: '+e.message,'error'); if(btn){btn.disabled=false;btn.classList.remove('spin');} }
 }
 window.adminLogin=adminLogin; window.adminLogout=adminLogout; window.adminSetFilter=adminSetFilter;
 window.adminSetStatus=adminSetStatus; window.adminOpenFileModal=adminOpenFileModal; window.adminSaveFile=adminSaveFile;
@@ -3029,6 +3043,92 @@ window.sendAdmMsg = sendAdmMsg; window.sendCliMsg = sendCliMsg;
 
 </script>
 <script>
+// ============================================
+// БЛОК: ОБЩИЕ ХЕЛПЕРЫ (error boundary / fetch / toast / cache)
+// ============================================
+/**
+ * @function safeRender
+ * @description Обёртка для render-функций: ловит ошибки и показывает
+ *              fallback вместо белого экрана.
+ * @param {Function} fn — render-функция
+ * @param {string} context — название для лога
+ */
+function safeRender(fn, context){
+  try { fn(); }
+  catch(e){
+    console.error(`[${context}]`, e);
+    const app = document.querySelector('.app') || document.body;
+    app.innerHTML = `
+      <div class="error-boundary">
+        <div class="eb-icon">⚠️</div>
+        <h2>Что-то пошло не так</h2>
+        <p>${context}: ${e.message}</p>
+        <button class="cta" onclick="location.reload()">Обновить страницу</button>
+        <button class="btn-ghost" onclick="history.back()">Назад</button>
+      </div>`;
+  }
+}
+/**
+ * @function apiFetch
+ * @description Fetch с retry (3 попытки), timeout 10с, единый разбор JSON.
+ * @param {string} url
+ * @param {object} [options]
+ * @param {number} [retries=3]
+ * @returns {Promise<object>} распарсенный JSON
+ */
+async function apiFetch(url, options={}, retries=3){
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), 10000);
+  try{
+    const res = await fetch(url, {...options, signal: controller.signal});
+    clearTimeout(timeout);
+    let data = null;
+    try{ data = await res.json(); }catch(_){ data = {}; }
+    if(!res.ok){ const err = new Error((data&&data.error) || `HTTP ${res.status}`); err.status = res.status; err.data = data; throw err; }
+    return data;
+  }catch(e){
+    clearTimeout(timeout);
+    if(retries > 0 && e.name !== 'AbortError' && !e.status){
+      await new Promise(r=>setTimeout(r, 1000));
+      return apiFetch(url, options, retries-1);
+    }
+    throw e;
+  }
+}
+/**
+ * @function showToast
+ * @description Всплывающее уведомление в правом нижнем углу.
+ * @param {string} message
+ * @param {'success'|'error'|'info'|'warning'} [type='info']
+ * @param {number} [duration=3000]
+ */
+function showToast(message, type='info', duration=3000){
+  let cont = document.getElementById('toast-container');
+  if(!cont){ cont = document.createElement('div'); cont.id='toast-container'; cont.className='toast-container'; document.body.appendChild(cont); }
+  const ico = {success:'✅', error:'❌', warning:'⚠️', info:'ℹ️'}[type] || 'ℹ️';
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span class="toast-ico">${ico}</span><span class="toast-msg">${message}</span>`;
+  cont.appendChild(t);
+  setTimeout(()=>{ t.style.animation='toastOut .3s var(--ease) forwards'; setTimeout(()=>t.remove(), 320); }, duration);
+}
+/**
+ * @function createCache
+ * @description Простой TTL-кэш в памяти.
+ * @param {number} [ttl=60000]
+ */
+function createCache(ttl=60000){
+  const store = new Map();
+  return {
+    get(key){ const it=store.get(key); if(!it) return null; if(Date.now()>it.exp){ store.delete(key); return null; } return it.val; },
+    set(key,val){ store.set(key,{val,exp:Date.now()+ttl}); },
+    clear(key){ if(key) store.delete(key); else store.clear(); }
+  };
+}
+const ordersCache = createCache(30000);
+const crmCache = createCache(60000);
+window.showToast = showToast;
+
 // LOADER
 (function(){
   const word = 'ПодариМомент';
@@ -3080,9 +3180,9 @@ function pathToRoute(path){
 function go(v, opts){
   opts = opts || {};
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
-  if(v==='admin' && typeof renderAdmin==='function') renderAdmin();
-  if(v==='account' && typeof renderAccount==='function') renderAccount();
-  if(v==='track' && typeof renderTrack==='function') renderTrack();
+  if(v==='admin' && typeof renderAdmin==='function') safeRender(renderAdmin, 'admin');
+  if(v==='account' && typeof renderAccount==='function') safeRender(renderAccount, 'account');
+  if(v==='track' && typeof renderTrack==='function') safeRender(renderTrack, 'track');
   if(v==='success') burstConfetti();
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');
@@ -3687,7 +3787,7 @@ document.getElementById('order-form').addEventListener('submit', async e=>{
     throw new Error(data.error || 'Не удалось создать оплату');
   }catch(err){
     if(btn){ btn.disabled = false; btn.textContent = orig; }
-    alert('Оплата временно недоступна: ' + err.message + '\\nПопробуйте позже или напишите hello@podarimoment.ru');
+    showToast('Оплата временно недоступна: ' + err.message,'error',5000);
   }
 });
 

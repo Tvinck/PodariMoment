@@ -957,6 +957,16 @@ body.legal-open{overflow:hidden}
 @keyframes skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .skel-stat{height:96px;border-radius:20px}
 .skel-card{height:96px;border-radius:22px;margin-bottom:10px}
+/* экран входа ЛК */
+.acc-login{max-width:420px;margin:40px auto;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.acc-login-logo{font-size:48px;line-height:1;margin-bottom:8px}
+.acc-login-title{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:26px;letter-spacing:-0.03em;margin:0}
+.acc-login-desc{font-size:14px;opacity:0.55;margin:8px 0 20px}
+.acc-login-input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-size:15px;transition:all .2s}
+.acc-login-input:focus{border-color:rgba(255,107,53,0.5);box-shadow:0 0 0 3px rgba(255,107,53,0.15);outline:none}
+.acc-login-btn{width:100%;margin-top:12px;justify-content:center}
+.acc-login-foot{font-size:13px;opacity:0.6;margin-top:16px}
+.acc-login-foot a{color:var(--orange);cursor:pointer}
 @media (max-width:640px){
   .acc-stats-row{grid-template-columns:1fr;gap:10px}
   .acc-avatar{width:60px;height:60px;font-size:26px}
@@ -1952,15 +1962,14 @@ function accSkeleton(){
   return `<div class="acc-stats-row"><div class="skel skel-stat"></div><div class="skel skel-stat"></div><div class="skel skel-stat"></div></div><div class="orders-list">${row+row+row}</div>`;
 }
 function accEmailForm(prefill){
-  return accShell(`
-    <div class="acc-search">
-      <div class="acc-search-title">Введите email, на который оформляли заказ</div>
-      <div class="acc-search-row">
-        <input class="input" id="acc-email-input" type="email" placeholder="ваш@email.ru" value="${prefill||''}">
-        <button class="cta" type="button" onclick="accLoadByInput()">Найти заказы →</button>
-      </div>
-      <div class="field-help">Мы покажем все заказы, оформленные на этот адрес.</div>
-    </div>`, prefill);
+  return `<section class="section"><div class="acc-login">
+    <div class="acc-login-logo">🎀</div>
+    <h2 class="acc-login-title">Найти мои заказы</h2>
+    <p class="acc-login-desc">Введите email, указанный при заказе</p>
+    <input class="input acc-login-input" id="acc-email-input" type="email" placeholder="ваш@email.ru" value="${prefill||''}" onkeydown="if(event.key==='Enter')accLoadByInput()">
+    <button class="cta acc-login-btn" type="button" onclick="accLoadByInput()">Найти</button>
+    <div class="acc-login-foot">Нет заказов? <a data-prod="gender">Сделать заказ</a></div>
+  </div></section>`;
 }
 function accEmpty(email){
   return accShell(`

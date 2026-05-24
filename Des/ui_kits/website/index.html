@@ -2385,7 +2385,7 @@ function adminStartPolling(){
           }
         });
       }
-      adminOrders = orders;
+      adminOrders = orders; ordersCache.set('all', orders);
       if(adminSection==='orders'){ const box=document.getElementById('admin-orders-table'); if(box) box.innerHTML=renderAdminOrdersTable(); }
     }catch(_){}
   }, 60000);
@@ -2407,17 +2407,22 @@ const CRM_SOURCE = {avito:'Авито', vk:'ВК', telegram:'Telegram', direct:'
  *              канбан-воронку. Соответствует разделу CRM из ТЗ.
  * @sideEffects Сетевой запрос, перерисовка #admin-shell
  */
-async function renderCrm(){
+async function renderCrm(force){
   const shell = document.getElementById('admin-shell');
   if(!shell) return;
   try{
-    const res = await fetch('/api/crm-leads?password='+encodeURIComponent(adminPwd()));
-    if(res.status===401){ adminLogout(); return; }
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error||'Ошибка');
-    crmLeads = data.leads||[];
+    let leads = force ? null : crmCache.get('all');
+    if(!leads){
+      const data = await apiFetch('/api/crm-leads?password='+encodeURIComponent(adminPwd()));
+      leads = data.leads||[];
+      crmCache.set('all', leads);
+    }
+    crmLeads = leads;
     renderCrmBoard();
-  }catch(e){ shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить CRM: ${e.message}</div>`; }
+  }catch(e){
+    if(e.status===401){ adminLogout(); return; }
+    shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить CRM: ${e.message}</div>`;
+  }
 }
 function nextStage(stage){
   const order = ['new','contacted','interested','ordered','done'];
@@ -2489,7 +2494,7 @@ async function crmMove(id, stage){
     if(res.status===401){ adminLogout(); return; }
     const data = await res.json(); if(!res.ok) throw new Error(data.error||'Ошибка');
     const i = crmLeads.findIndex(l=>l.id===id); if(i>=0) crmLeads[i]=data.lead;
-    renderCrmBoard();
+    crmCache.clear('all'); renderCrmBoard(); showToast('Лид перемещён','success');
   }catch(e){ showToast('Не удалось переместить: '+e.message,'error'); }
 }
 /**
@@ -2540,7 +2545,7 @@ async function crmSave(id){
     const data = await res.json(); if(!res.ok) throw new Error(data.error||'Ошибка');
     if(id){ const i=crmLeads.findIndex(l=>l.id===id); if(i>=0) crmLeads[i]=data.lead; }
     else { crmLeads.unshift(data.lead); }
-    closeLegalModal(); renderCrmBoard();
+    crmCache.clear('all'); closeLegalModal(); renderCrmBoard(); showToast('Лид сохранён','success');
   }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
 }
 window.crmOpenModal=crmOpenModal; window.crmToggleLost=crmToggleLost; window.crmSave=crmSave;
@@ -2625,17 +2630,20 @@ function adminLogout(){ adminStopPolling(); try{ sessionStorage.removeItem('pm_a
  *              adminOrders и рендерит панель. Соответствует fetchAdminOrders.
  * @sideEffects Сетевой запрос, мутация adminOrders, перерисовка #admin-shell
  */
-async function adminFetchOrders(){
+async function adminFetchOrders(force){
   try{
-    const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})});
-    if(res.status===401){ adminLogout(); return; }
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error||'Ошибка');
-    adminOrders = data.orders||[];
+    let orders = force ? null : ordersCache.get('all');
+    if(!orders){
+      const data = await apiFetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:adminPwd()})});
+      orders = data.orders||[];
+      ordersCache.set('all', orders);
+    }
+    adminOrders = orders;
     if(adminSeenPaid===null){ adminSeenPaid = new Set(adminOrders.filter(o=>['paid','processing','done'].includes(o.payment_status)).map(o=>o.id)); }
     renderAdminPanel();
     adminStartPolling();
   }catch(e){
+    if(e.status===401){ adminLogout(); return; }
     const shell = document.getElementById('admin-shell');
     if(shell) shell.innerHTML = `<div class="field-error-msg" style="padding:24px;text-align:center">Не удалось загрузить: ${e.message}</div>`;
   }
@@ -2832,6 +2840,7 @@ async function adminPatch(id, patch){
   if(res.status===401){ adminLogout(); throw new Error('Сессия истекла'); }
   const data = await res.json();
   if(!res.ok) throw new Error(data.error||'Ошибка');
+  ordersCache.clear('all');
   return data.order;
 }
 /**

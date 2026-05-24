@@ -52,6 +52,7 @@ console.log('→ Inject public env → dist/env.js');
 const publicEnv = {
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
   SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+  YANDEX_METRIKA_ID: process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || '',
 };
 fs.writeFileSync(
   path.join(OUT, 'env.js'),

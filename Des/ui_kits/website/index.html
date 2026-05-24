@@ -33,6 +33,18 @@
 <!-- Шрифты: preconnect для ускорения -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Яндекс.Метрика (грузится только если задан ID в window.__ENV__.YANDEX_METRIKA_ID) -->
+<script>
+(function(){
+  var id = (window.__ENV__ && window.__ENV__.YANDEX_METRIKA_ID) || '';
+  if(!id) return;
+  window.METRIKA_ID = id;
+  (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();
+  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+  (window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
+  ym(id,'init',{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:false});
+})();
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
 
@@ -3554,6 +3566,19 @@ function createCache(ttl=60000){
 const ordersCache = createCache(30000);
 const crmCache = createCache(60000);
 window.showToast = showToast;
+/**
+ * @function track
+ * @description Безопасная отправка цели в Яндекс.Метрику/GA. Не падает,
+ *              если счётчик не загрузился.
+ * @param {string} goal — идентификатор цели
+ * @param {object} [params]
+ */
+function track(goal, params={}){
+  try{ if(window.ym && window.METRIKA_ID) window.ym(window.METRIKA_ID, 'reachGoal', goal, params); }catch(e){}
+  try{ if(window.gtag) window.gtag('event', goal, params); }catch(e){}
+}
+window.track = track;
+document.addEventListener('click',function(e){ if(e.target.closest('.acc-download, .ord-dl')) track('download_file'); });
 
 // LOADER
 (function(){
@@ -3609,7 +3634,9 @@ function go(v, opts){
   if(v==='admin' && typeof renderAdmin==='function') safeRender(renderAdmin, 'admin');
   if(v==='account' && typeof renderAccount==='function') safeRender(renderAccount, 'account');
   if(v==='track' && typeof renderTrack==='function') safeRender(renderTrack, 'track');
-  if(v==='success') burstConfetti();
+  if(v==='account') track('view_account');
+  if(v==='track') track('view_track');
+  if(v==='success'){ burstConfetti(); track('purchase',{order_id:(new URLSearchParams(location.search).get('orderId')||'')}); }
   document.querySelectorAll('.dock [data-go],.dock [data-prod]').forEach(el=>el.classList.toggle('active', el.dataset.go===v));
   const mm=document.getElementById('mobile-menu');if(mm)mm.classList.remove('open');
   const bg=document.getElementById('burger');if(bg)bg.classList.remove('open');
@@ -3861,6 +3888,8 @@ function initDemoPlayer(){
 }
 
 function initGenderForm(){
+  track('view_tariffs');
+  (function(){ const form=document.getElementById('order-form'); if(form && !form.__fs){ form.__fs=1; form.addEventListener('focusin',()=>track('form_start'),{once:true}); } })();
   applyTariff();
   syncRevealStage();
   recalcGenderPrice();
@@ -3874,6 +3903,7 @@ document.addEventListener('click', e=>{
     document.querySelectorAll('.tariff-card').forEach(c=>c.classList.remove('act'));
     tcard.classList.add('act');
     applyTariff(); recalcGenderPrice();
+    track('select_tariff',{tariff:currentTariff(), price:(TARIFFS[currentTariff()]||{}).price});
     return;
   }
   const vc = e.target.closest('.voice-chip');
@@ -4232,6 +4262,7 @@ document.getElementById('order-form').addEventListener('submit', async e=>{
   if(btn){ btn.disabled = true; btn.textContent = 'Переходим к оплате…'; }
 
   const payload = collectGenderOrder();
+  track('click_pay',{tariff:payload.tariff, price:(TARIFFS[payload.tariff]||{}).price, promo:payload.promo_code||''});
   try{
     const res = await fetch('/api/payment-init', {
       method:'POST', headers:{'Content-Type':'application/json'},

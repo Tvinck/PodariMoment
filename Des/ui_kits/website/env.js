@@ -5,5 +5,6 @@
 // сюда НИКОГДА не попадают — они живут только в serverless-функциях.
 window.__ENV__ = window.__ENV__ || {
   SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: ''
+  SUPABASE_ANON_KEY: '',
+  YANDEX_METRIKA_ID: ''
 };

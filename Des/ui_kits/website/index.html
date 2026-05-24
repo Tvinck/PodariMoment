@@ -967,6 +967,26 @@ body.legal-open{overflow:hidden}
 .acc-login-btn{width:100%;margin-top:12px;justify-content:center}
 .acc-login-foot{font-size:13px;opacity:0.6;margin-top:16px}
 .acc-login-foot a{color:var(--orange);cursor:pointer}
+
+/* === АДМИНКА: логин + топбар === */
+.admin-login{position:relative;min-height:80vh;display:grid;place-items:center;overflow:hidden}
+.admin-login-glow{position:absolute;width:min(420px,60vw);aspect-ratio:1;border-radius:50%;filter:blur(90px);pointer-events:none;animation:gfloat 8s ease-in-out infinite}
+.admin-login-glow.g1{background:rgba(255,107,53,0.35);top:8%;left:12%}
+.admin-login-glow.g2{background:rgba(255,209,102,0.25);bottom:8%;right:12%;animation-delay:-4s}
+.admin-login-card{position:relative;z-index:1;width:min(380px,92vw);background:var(--card);border:1px solid var(--line);border-radius:28px;padding:36px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.5)}
+.admin-login-card.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.admin-login-logo{font-size:44px;line-height:1;margin-bottom:6px}
+.admin-login-title{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:24px;letter-spacing:-0.03em;margin:4px 0 20px}
+.admin-pwd-wrap{position:relative}
+.admin-pwd-wrap .input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 44px 14px 18px;font-size:15px}
+.admin-pwd-wrap .input:focus{border-color:rgba(255,107,53,0.5);box-shadow:0 0 0 3px rgba(255,107,53,0.15);outline:none}
+.admin-pwd-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;padding:6px;opacity:0.7}
+.admin-pwd-eye:hover{opacity:1}
+.admin-login-btn{width:100%;margin-top:12px;justify-content:center}
+.admin-topbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,3vw,28px);background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line);margin:-14px calc(-1*clamp(12px,3vw,28px)) 20px}
+.admin-topbar-brand{display:flex;align-items:center;gap:10px;font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:16px;letter-spacing:-0.02em}
+.admin-topbar-logo{font-size:20px}
 @media (max-width:640px){
   .acc-stats-row{grid-template-columns:1fr;gap:10px}
   .acc-avatar{width:60px;height:60px;font-size:26px}
@@ -2157,36 +2177,54 @@ function renderAdmin(){
   const view = document.getElementById('view-admin');
   if(!adminPwd()){
     view.innerHTML = `
-      <section class="admin">
-        <div class="admin-gate">
-          <div class="kicker">Админ-панель</div>
-          <h2 class="admin-gate-title">Вход</h2>
-          <input class="input" id="admin-pwd-input" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')adminLogin()">
-          <button class="cta" type="button" onclick="adminLogin()">Войти →</button>
+      <div class="admin-login">
+        <div class="admin-login-glow g1"></div><div class="admin-login-glow g2"></div>
+        <div class="admin-login-card" id="admin-login-card">
+          <div class="admin-login-logo">🎀</div>
+          <div class="kicker">ПодариМомент</div>
+          <h2 class="admin-login-title">Панель управления</h2>
+          <div class="admin-pwd-wrap">
+            <input class="input" id="admin-pwd-input" type="password" placeholder="Пароль" onkeydown="if(event.key==='Enter')adminLogin()">
+            <button class="admin-pwd-eye" type="button" onclick="adminTogglePwd(this)" aria-label="Показать пароль">👁</button>
+          </div>
+          <button class="cta admin-login-btn" type="button" onclick="adminLogin()">Войти</button>
           <div class="field-error-msg" id="admin-pwd-error" style="display:none">Неверный пароль</div>
         </div>
-      </section>`;
+      </div>`;
     setTimeout(()=>{const i=document.getElementById('admin-pwd-input');if(i)i.focus();},50);
     return;
   }
-  view.innerHTML = `<section class="admin"><div id="admin-shell"><div class="acc-loading">Загружаем заказы…</div></div></section>`;
+  view.innerHTML = `<div class="admin-topbar">
+      <div class="admin-topbar-brand"><span class="admin-topbar-logo">🎀</span> Панель управления</div>
+      <button class="btn-ghost" style="padding:8px 16px;font-size:12px" onclick="adminLogout()">Выйти</button>
+    </div>
+    <section class="admin"><div id="admin-shell">${accSkeleton()}</div></section>`;
   adminFetchOrders();
 }
+function adminTogglePwd(btn){
+  const inp = document.getElementById('admin-pwd-input');
+  if(!inp) return;
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁' : '🙈';
+}
+window.adminTogglePwd = adminTogglePwd;
 async function adminLogin(){
   const inp = document.getElementById('admin-pwd-input');
   const err = document.getElementById('admin-pwd-error');
+  const card = document.getElementById('admin-login-card');
   const pwd = inp ? inp.value : '';
   if(!pwd){ if(inp) inp.classList.add('input-error'); return; }
   if(err) err.style.display='none';
+  const fail = (msg)=>{ if(err){err.textContent=msg;err.style.display='block';} if(card){card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');} };
   try{
     const res = await fetch('/api/admin-orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
     const data = await res.json();
-    if(res.status===401){ if(err){err.textContent='Неверный пароль';err.style.display='block';} if(inp) inp.classList.add('input-error'); return; }
+    if(res.status===401){ fail('Неверный пароль'); if(inp) inp.classList.add('input-error'); return; }
     if(!res.ok) throw new Error(data.error||'Ошибка');
     try{ sessionStorage.setItem('pm_admin_pwd', pwd); }catch(_){}
     adminOrders = data.orders||[];
-    renderAdminPanel();
-  }catch(e){ if(err){err.textContent='Сервис недоступен: '+e.message;err.style.display='block';} }
+    renderAdmin();
+  }catch(e){ fail('Сервис недоступен: '+e.message); }
 }
 function adminLogout(){ try{ sessionStorage.removeItem('pm_admin_pwd'); }catch(_){} renderAdmin(); }
 async function adminFetchOrders(){

@@ -66,6 +66,22 @@ module.exports = async (req, res) => {
       // 2. Если оплачено и файл ещё не сгенерирован — письмо + авто-генерация
       if (mapped === 'paid' && order && !order.file_url) {
         await sendEmail(order.email, emailPaid(order)); // письмо 1
+
+        // CRM: создаём лид на этапе ordered, если по этому email его ещё нет
+        try {
+          const { data: existing } = await sb.from('crm_leads').select('id').eq('email', order.email).limit(1);
+          if (!existing || existing.length === 0) {
+            await sb.from('crm_leads').insert({
+              email: order.email,
+              name: order.parent_names || null,
+              source: 'direct',
+              stage: 'ordered',
+              order_id: order.id,
+              ordered_at: new Date().toISOString(),
+            });
+          }
+        } catch { /* CRM не критична для оплаты */ }
+
         try {
           await generateVoice(order); // внутри выставит статус processing + kie_task_id
         } catch (genErr) {

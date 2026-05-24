@@ -2398,8 +2398,58 @@ async function crmMove(id, stage){
     renderCrmBoard();
   }catch(e){ alert('Не удалось переместить: '+e.message); }
 }
-function crmOpenModal(id){ /* реализуется в модалках CRM */ }
-window.crmOpenModal=crmOpenModal;
+/**
+ * @function crmOpenModal
+ * @description Открывает модалку добавления/редактирования лида.
+ * @param {string} [id] — uuid лида для редактирования; без id — создание
+ */
+function crmOpenModal(id){
+  const l = id ? crmLeads.find(x=>x.id===id) : {};
+  const lead = l || {};
+  const srcOpts = Object.entries(CRM_SOURCE).map(([v,t])=>`<option value="${v}" ${lead.source===v?'selected':''}>${t}</option>`).join('');
+  const stgOpts = CRM_STAGES.map(s=>`<option value="${s.id}" ${(lead.stage||'new')===s.id?'selected':''}>${s.ico} ${s.label}</option>`).join('');
+  const m = document.getElementById('legal-modal');
+  document.getElementById('legal-modal-title').textContent = id ? '✏️ Редактировать лид' : '+ Новый лид';
+  document.getElementById('legal-modal-body').innerHTML = `
+    <div class="field"><label>Имя</label><input class="input admin-modal-input" id="crm-name" value="${lead.name||''}"></div>
+    <div class="field" style="margin-top:12px"><label>Email</label><input class="input admin-modal-input" id="crm-email" type="email" value="${lead.email||''}"></div>
+    <div class="field" style="margin-top:12px"><label>Телефон</label><input class="input admin-modal-input" id="crm-phone" type="tel" value="${lead.phone||''}"></div>
+    <div class="field" style="margin-top:12px"><label>Источник</label><select class="input admin-modal-input" id="crm-source">${srcOpts}</select></div>
+    <div class="field" style="margin-top:12px"><label>Этап</label><select class="input admin-modal-input" id="crm-stage" onchange="crmToggleLost(this.value)">${stgOpts}</select></div>
+    <div class="field" style="margin-top:12px"><label>Заметки</label><textarea class="input admin-modal-input" id="crm-notes" rows="2" placeholder="Чем интересовался, что ответил…">${lead.notes||''}</textarea></div>
+    <div class="field" id="crm-lost-wrap" style="margin-top:12px;display:${(lead.stage==='lost')?'block':'none'}"><label>Причина отказа</label><textarea class="input admin-modal-input" id="crm-lost" rows="2" placeholder="Почему не купил?">${lead.lost_reason||''}</textarea></div>
+    <div class="field-error-msg" id="crm-error" style="display:none"></div>
+    <div class="admin-modal-actions">
+      <button class="cta" type="button" onclick="crmSave('${id||''}')">Сохранить</button>
+      <button class="btn-ghost" type="button" onclick="closeLegalModal()">Отмена</button>
+    </div>`;
+  m.style.display='flex'; document.body.classList.add('legal-open');
+}
+function crmToggleLost(stage){
+  const w = document.getElementById('crm-lost-wrap');
+  if(w) w.style.display = stage==='lost' ? 'block' : 'none';
+}
+async function crmSave(id){
+  const err = document.getElementById('crm-error');
+  const val = i => (document.getElementById(i)||{}).value || '';
+  const payload = {
+    password: adminPwd(),
+    name: val('crm-name'), email: val('crm-email'), phone: val('crm-phone'),
+    source: val('crm-source'), stage: val('crm-stage'),
+    notes: val('crm-notes'), lost_reason: val('crm-lost')
+  };
+  try{
+    const method = id ? 'PATCH' : 'POST';
+    if(id) payload.id = id;
+    const res = await fetch('/api/crm-leads',{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(res.status===401){ adminLogout(); return; }
+    const data = await res.json(); if(!res.ok) throw new Error(data.error||'Ошибка');
+    if(id){ const i=crmLeads.findIndex(l=>l.id===id); if(i>=0) crmLeads[i]=data.lead; }
+    else { crmLeads.unshift(data.lead); }
+    closeLegalModal(); renderCrmBoard();
+  }catch(e){ if(err){err.textContent='Ошибка: '+e.message;err.style.display='block';} }
+}
+window.crmOpenModal=crmOpenModal; window.crmToggleLost=crmToggleLost; window.crmSave=crmSave;
 window.adminSetSection=adminSetSection; window.renderCrm=renderCrm; window.crmMove=crmMove;
 
 /**

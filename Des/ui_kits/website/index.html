@@ -470,6 +470,9 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 @media (max-width:520px){.footer-legal{flex-direction:column}.footer-legal-block.right{text-align:left;align-items:flex-start}}
 .footer-trust{text-align:center;padding:16px 0 4px;font-size:11px;opacity:0.4;letter-spacing:0.02em}
 @keyframes ripple{to{transform:scale(2.5);opacity:0}}
+.view-in{animation:pageIn .28s var(--ease)}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion: reduce){.view-in{animation:none}}
 /* === POLISH: selection / scrollbar / focus / cursor === */
 ::selection{background:rgba(255,107,53,0.3);color:#fff}
 ::-webkit-scrollbar{width:6px}
@@ -3892,6 +3895,7 @@ function renderAbout(){
 function go(v, opts){
   opts = opts || {};
   VIEWS.forEach(x=>{const el=document.getElementById('view-'+x);if(el)el.style.display = v===x?'block':'none';});
+  (function(){ const cur=document.getElementById('view-'+v); if(cur){ cur.classList.remove('view-in'); void cur.offsetWidth; cur.classList.add('view-in'); } })();
   if(v==='admin' && typeof renderAdmin==='function') safeRender(renderAdmin, 'admin');
   if(v==='account' && typeof renderAccount==='function') safeRender(renderAccount, 'account');
   if(v==='track' && typeof renderTrack==='function') safeRender(renderTrack, 'track');

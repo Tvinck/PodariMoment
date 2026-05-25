@@ -180,6 +180,12 @@ img{max-width:100%;display:block}
 .mc-label{font-size:14px;font-weight:700;letter-spacing:-0.02em}
 .mc-icon{font-size:52px;line-height:1;align-self:center;margin:auto 0}
 .mc-price{align-self:flex-start;background:rgba(0,0,0,0.25);color:inherit;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.value-props{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:0 0 24px}
+@media (max-width:640px){.value-props{grid-template-columns:1fr}}
+.vp-item{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px 24px;display:flex;flex-direction:column;gap:10px}
+.vp-icon{font-size:32px;line-height:1}
+.vp-item h3{font-size:18px;font-weight:700;letter-spacing:-0.03em;margin:0}
+.vp-item p{font-size:13px;line-height:1.5;color:rgba(255,255,255,0.55);margin:0}
 @media (max-width:920px){.mascot{display:none}.hero-mobile-strip{display:flex}}
 .hero-mobile-strip{display:none;gap:10px;margin-top:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 8px;-ms-overflow-style:none;scrollbar-width:none}
 .hero-mobile-strip::-webkit-scrollbar{display:none}
@@ -1441,7 +1447,12 @@ body.admin-view .tg-fab{display:none}
     </section>
 
     <section class="section" id="products">
-      <div class="section-head"><div class="kicker">Продукт</div><h2>Один голос — <em>целый момент</em></h2></div>
+      <div class="section-head"><div class="kicker">Преимущества</div><h2>Почему выбирают <em>нас</em></h2></div>
+      <div class="value-props">
+        <div class="vp-item"><div class="vp-icon">⚡</div><h3>За 5 минут</h3><p>Файл MP3 приходит на email сразу после оплаты</p></div>
+        <div class="vp-item"><div class="vp-icon">🎙</div><h3>Реальный голос</h3><p>ElevenLabs — лучший ИИ-синтез речи с живой интонацией</p></div>
+        <div class="vp-item"><div class="vp-icon">💳</div><h3>Без регистрации</h3><p>Оплата через Т-Банк, файл по ссылке на почте</p></div>
+      </div>
       <div class="products products-single">
         <!-- Остальные продукты временно скрыты — фокус на запуске гендер-пати. Не удалять. -->
         <div id="other-products" style="display:none">

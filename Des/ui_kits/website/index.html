@@ -470,6 +470,17 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 @media (max-width:520px){.footer-legal{flex-direction:column}.footer-legal-block.right{text-align:left;align-items:flex-start}}
 .footer-trust{text-align:center;padding:16px 0 4px;font-size:11px;opacity:0.4;letter-spacing:0.02em}
 @keyframes ripple{to{transform:scale(2.5);opacity:0}}
+/* === POLISH: selection / scrollbar / focus / cursor === */
+::selection{background:rgba(255,107,53,0.3);color:#fff}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--card2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,107,53,0.4)}
+:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:4px}
+button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:4px}
+.custom-cursor{position:fixed;width:16px;height:16px;border-radius:50%;background:var(--orange);pointer-events:none;z-index:99999;mix-blend-mode:difference;transition:transform .08s ease,width .2s var(--spring),height .2s var(--spring);top:0;left:0}
+.custom-cursor.hover{width:40px;height:40px;margin:-12px}
+@media (hover: none){.custom-cursor{display:none}}
 /* === SUCCESS POLISH === */
 .success-check{position:relative}
 .success-check-anim{animation:successPop .6s var(--spring) both}
@@ -3728,6 +3739,14 @@ window.addEventListener('scroll', ()=>{ const h=document.getElementById('scroll-
 const ordersCache = createCache(30000);
 const crmCache = createCache(60000);
 window.showToast = showToast;
+// Кастомный курсор (только десктоп с hover-устройством)
+if(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
+  const cur=document.createElement('div'); cur.className='custom-cursor'; document.body.appendChild(cur);
+  document.addEventListener('mousemove', e=>{ cur.style.transform=`translate(${e.clientX-8}px,${e.clientY-8}px)`; }, {passive:true});
+  document.addEventListener('mouseover', e=>{ if(e.target.closest('button,a,.pcard,.cat-item,.chip,.gender-card,.voice-chip,.tariff-card,.faq-item')) cur.classList.add('hover'); });
+  document.addEventListener('mouseout', e=>{ if(e.target.closest('button,a,.pcard,.cat-item,.chip,.gender-card,.voice-chip,.tariff-card,.faq-item')) cur.classList.remove('hover'); });
+}
+
 // Ripple-эффект на кнопках
 function addRipple(e){
   const btn=e.currentTarget; const d=Math.max(btn.clientWidth,btn.clientHeight); const r=btn.getBoundingClientRect();

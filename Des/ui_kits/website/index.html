@@ -469,6 +469,19 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .footer-legal-row a:hover{color:var(--orange)}
 @media (max-width:520px){.footer-legal{flex-direction:column}.footer-legal-block.right{text-align:left;align-items:flex-start}}
 .footer-trust{text-align:center;padding:16px 0 4px;font-size:11px;opacity:0.4;letter-spacing:0.02em}
+/* === HERO POLISH === */
+.hero{position:relative}
+.hero-glow{position:absolute;width:600px;height:300px;max-width:90vw;background:radial-gradient(ellipse,rgba(255,107,53,0.12) 0%,transparent 70%);top:40%;left:-100px;transform:translateY(-50%);pointer-events:none;filter:blur(40px);z-index:0}
+.hero > div{position:relative;z-index:1}
+.hero h1 .accent{background:linear-gradient(135deg,#ff6b35,#ffd166,#ff6b35);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:textShine 4s linear infinite}
+@keyframes textShine{0%{background-position:0% center}100%{background-position:200% center}}
+.trust-strip{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px}
+.trust-strip span{font-size:11px;color:rgba(255,255,255,0.45);font-weight:500;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.scroll-hint{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:32px;opacity:0.4;transition:opacity .4s}
+.scroll-hint-line{width:1px;height:40px;background:linear-gradient(to bottom,transparent,#fff);animation:scrollLine 2s ease-in-out infinite}
+@keyframes scrollLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.scroll-hint span{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;font-weight:600}
+@media (prefers-reduced-motion: reduce){.hero h1 .accent{animation:none}.scroll-hint-line{animation:none}}
 
 /* === FAQ === */
 .faq-list{display:flex;flex-direction:column;gap:10px}
@@ -1348,6 +1361,7 @@ body.admin-view .tg-fab{display:none}
 
   <div id="view-landing">
     <section class="hero">
+      <div class="hero-glow"></div>
       <div>
         <div class="eyebrow"><span class="pulse"></span> ИИ-голос · гендер-пати · 5 минут</div>
         <h1>Голос, который <em>раскроет</em><br>пол вашего <span class="accent">малыша</span></h1>
@@ -1355,6 +1369,11 @@ body.admin-view .tg-fab{display:none}
         <div class="hero-cta-row">
           <button class="cta" data-prod="gender">Заказать голос →</button>
           <button class="btn-ghost" data-scroll="how">▶ Как это работает</button>
+        </div>
+        <div class="trust-strip">
+          <span>🔒 Безопасная оплата</span>
+          <span>⚡ Файл за 5 минут</span>
+          <span>💳 Т-Банк эквайринг</span>
         </div>
         <div class="stats" id="hero-stats">
           <div><strong>от 399 ₽</strong><span>за анонс</span></div>
@@ -1371,6 +1390,10 @@ body.admin-view .tg-fab{display:none}
         <div class="hms-card" style="background:linear-gradient(135deg,#cfe6ff,#6fb6ff);color:#06183a"><div class="hms-em">мальчик</div><div class="hms-icon">💙</div><div class="hms-name">для анонса</div></div>
         <div class="hms-card" style="background:linear-gradient(135deg,#ffe2ec,#ff8fb4);color:#3a061a"><div class="hms-em">девочка</div><div class="hms-icon">💗</div><div class="hms-name">MP3 / MP4</div></div>
         <div class="hms-card" style="background:linear-gradient(135deg,#fff3c2,#ffd166);color:#3a2906"><div class="hms-em">сюрприз</div><div class="hms-icon">❓</div><div class="hms-name">599 ₽</div></div>
+      </div>
+      <div class="scroll-hint" id="scroll-hint">
+        <div class="scroll-hint-line"></div>
+        <span>Листайте</span>
       </div>
     </section>
 
@@ -3626,6 +3649,8 @@ function createCache(ttl=60000){
     }
   }catch(e){}
 })();
+// Скрыть scroll-hint после первой прокрутки
+window.addEventListener('scroll', ()=>{ const h=document.getElementById('scroll-hint'); if(h && scrollY>100) h.style.opacity='0'; }, { passive:true });
 const ordersCache = createCache(30000);
 const crmCache = createCache(60000);
 window.showToast = showToast;

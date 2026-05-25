@@ -128,16 +128,10 @@ img{max-width:100%;display:block}
 
 /* === НОВЫЙ LOGO (orizn-style) === */
 .logo3d{width:46px;height:46px;flex-shrink:0;position:relative;animation:logoBreath 4s ease-in-out infinite}
-.logo3d-mark{width:100%;height:100%;border-radius:14px;background:radial-gradient(circle at 30% 30%,rgba(255,180,140,0.35),rgba(20,10,20,0.85) 70%);box-shadow:0 8px 24px rgba(255,90,40,0.45),inset 0 1px 0 rgba(255,255,255,0.25),inset 0 -2px 6px rgba(0,0,0,0.4);position:relative;overflow:hidden;display:grid;place-items:center;backdrop-filter:blur(2px)}
-.logo3d-mark::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.18) 0%,transparent 40%,transparent 60%,rgba(0,0,0,0.4) 100%);pointer-events:none}
-.logo3d-mark svg{width:62%;height:62%;position:relative;z-index:2;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))}
-.logo3d-mark .lg-c1,.logo3d-mark .lg-c2{transform-origin:24px 24px;animation:lgSpin 14s linear infinite}
-.logo3d-mark .lg-c2{animation-direction:reverse;animation-duration:11s}
-.logo3d-flare{position:absolute;inset:0;border-radius:14px;background:radial-gradient(circle at 50% 50%,rgba(255,107,53,0.4),transparent 60%);opacity:0;animation:lgFlare 4s ease-in-out infinite;pointer-events:none}
+.logo3d-mark{width:100%;height:100%;border-radius:14px;background:var(--grad);box-shadow:0 4px 16px rgba(255,107,53,0.4);position:relative;display:grid;place-items:center}
+.logo3d-mark .logo-pm{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.04em;color:#fff;line-height:1}
 .brand:hover .logo3d-mark{transform:scale(1.05) rotate(-3deg);transition:transform .35s var(--spring)}
 @keyframes logoBreath{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes lgSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-@keyframes lgFlare{0%,100%{opacity:0.3}50%{opacity:0.8}}
 .brand-logotype{font-family:'nauryzRedKeds','Space Grotesk',sans-serif;font-weight:700;font-size:18px;letter-spacing:-0.04em;text-align:left;line-height:1;display:flex;flex-direction:column;gap:2px}
 .brand-logotype b{font-weight:700;color:#fff}
 .brand-logotype em{font-style:normal;font-size:9px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.45);font-family:'Manrope',sans-serif}
@@ -1378,23 +1372,9 @@ body.admin-view .tg-fab{display:none}
  <nav class="topnav topbar-inner" aria-label="Главная навигация">
     <button class="brand" data-go="landing">
       <div class="logo3d">
-        <div class="logo3d-flare"></div>
-        <div class="logo3d-mark">
-          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="lg-c1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff5d0"/><stop offset="60%" stop-color="#ff8458"/><stop offset="100%" stop-color="#c026d3"/></linearGradient>
-              <linearGradient id="lg-c2" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#ffd166"/><stop offset="100%" stop-color="#ff5b3a"/></linearGradient>
-            </defs>
-            <!-- top crescent -->
-            <path class="lg-c1" d="M24 4 A20 20 0 0 1 44 24 L34 24 A10 10 0 0 0 24 14 Z" fill="url(#lg-c1)"/>
-            <!-- bottom crescent -->
-            <path class="lg-c2" d="M24 44 A20 20 0 0 1 4 24 L14 24 A10 10 0 0 0 24 34 Z" fill="url(#lg-c2)"/>
-            <!-- subtle orbit ring -->
-            <ellipse cx="24" cy="24" rx="21" ry="21" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
-          </svg>
-        </div>
+        <div class="logo3d-mark"><span class="logo-pm">ПМ</span></div>
       </div>
-      <span class="brand-logotype"><b>ПМ Момент</b><em>подарок за 5 минут</em></span>
+      <span class="brand-logotype"><b>ПодариМомент</b><em>голос за 5 минут</em></span>
     </button>
     <div class="topnav-links">
       <a data-scroll="how">Как работает</a>

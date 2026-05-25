@@ -482,6 +482,13 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 @keyframes scrollLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 .scroll-hint span{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;font-weight:600}
 @media (prefers-reduced-motion: reduce){.hero h1 .accent{animation:none}.scroll-hint-line{animation:none}}
+/* === SECTION POLISH === */
+.section-divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.3) 30%,rgba(255,209,102,0.3) 70%,transparent);margin:8px 0}
+.kicker{display:inline-flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:24px;height:2px;background:var(--grad);border-radius:2px;flex-shrink:0}
+.step{position:relative;overflow:hidden}
+.step::after{content:attr(data-step);position:absolute;bottom:-10px;right:-10px;font-size:120px;font-weight:800;font-family:'nauryzRedKeds','Space Grotesk',sans-serif;color:rgba(255,255,255,0.03);line-height:1;pointer-events:none;transition:color .3s;letter-spacing:-0.05em}
+.step:hover::after{color:rgba(255,107,53,0.06)}
 
 /* === FAQ === */
 .faq-list{display:flex;flex-direction:column;gap:10px}
@@ -1437,15 +1444,19 @@ body.admin-view .tg-fab{display:none}
       </div>
     </section>
 
+    <div class="section-divider"></div>
+
     <section class="section section-alt" id="how">
-      <div class="section-head"><div class="kicker">Как работает</div><h2>Подарок за <em>5 минут</em></h2></div>
+      <div class="section-head"><div class="kicker">Как работает</div><h2>Голос за <em>5 минут</em></h2></div>
       <div class="how-grid">
-        <div class="step"><div class="step-icon">🎯</div><div class="step-num">01</div><div><h4>Выбери продукт</h4><p>9 направлений — для души и бизнеса</p></div></div>
-        <div class="step"><div class="step-icon">✏️</div><div class="step-num">02</div><div><h4>Заполни форму</h4><p>Стиль, фото, ИИ-модель — собирай свой</p></div></div>
-        <div class="step"><div class="step-icon">💳</div><div class="step-num">03</div><div><h4>Оплати</h4><p>Карта, СБП, ЮMoney — без регистрации</p></div></div>
-        <div class="step"><div class="step-icon">📬</div><div class="step-num">04</div><div><h4>Получи файл</h4><p>На почту и в личный кабинет — за 5 минут</p></div></div>
+        <div class="step" data-step="01"><div class="step-icon">🎀</div><div class="step-num">01</div><div><h4>Выберите параметры</h4><p>Пол, голос, сценарий — послушайте превью</p></div></div>
+        <div class="step" data-step="02"><div class="step-icon">✏️</div><div class="step-num">02</div><div><h4>Свой текст</h4><p>Или готовый шаблон — ИИ адаптирует</p></div></div>
+        <div class="step" data-step="03"><div class="step-icon">💳</div><div class="step-num">03</div><div><h4>Оплатите</h4><p>Т-Банк, без регистрации</p></div></div>
+        <div class="step" data-step="04"><div class="step-icon">📬</div><div class="step-num">04</div><div><h4>Получите файл</h4><p>MP3 на почту за 5 минут</p></div></div>
       </div>
     </section>
+
+    <div class="section-divider"></div>
 
     <section class="section">
       <div class="banner-pro">
@@ -1484,6 +1495,8 @@ body.admin-view .tg-fab{display:none}
       </div>
       <div class="faq-foot reveal">Не нашли ответ? <a data-go="account">Спросите в чате поддержки →</a></div>
     </section>
+
+    <div class="section-divider"></div>
 
     <section class="section" id="reviews">
       <div class="section-head"><div class="kicker">Отзывы</div><h2>Здесь будут <em>ваши истории</em></h2></div>

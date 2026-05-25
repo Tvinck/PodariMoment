@@ -1,4 +1,7 @@
 // AdminTable.jsx — orders dashboard (password-gated)
+// ⚠️ ЭТО РЕФЕРЕНС. Рабочая версия админки — в index.html (renderAdmin):
+//    серверная авторизация /api/admin-orders, реальные заказы из Supabase,
+//    смена статуса и прикрепление файла через /api/admin-update.
 const { useState: useStateA } = React;
 
 const ORDERS = [

@@ -47,4 +47,16 @@ console.log('→ Copy tokens Des/colors_and_type.css → dist/colors_and_type.cs
 const tokens = path.join(DES, 'colors_and_type.css');
 if (fs.existsSync(tokens)) fs.copyFileSync(tokens, path.join(OUT, 'colors_and_type.css'));
 
+// Инжектим ТОЛЬКО публичные env в dist/env.js (service-role/пароль НЕ сюда!)
+console.log('→ Inject public env → dist/env.js');
+const publicEnv = {
+  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+  YANDEX_METRIKA_ID: process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID || '',
+};
+fs.writeFileSync(
+  path.join(OUT, 'env.js'),
+  `window.__ENV__ = ${JSON.stringify(publicEnv)};\n`
+);
+
 console.log('✓ Build done. Output:', OUT);

@@ -5,17 +5,35 @@
   "framework": null,
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    { "path": "/api/cron-check-orders", "schedule": "*/15 * * * *" }
+  ],
   "rewrites": [
     { "source": "/order/:product", "destination": "/index.html" },
     { "source": "/order", "destination": "/index.html" },
     { "source": "/catalog", "destination": "/index.html" },
     { "source": "/account", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" },
-    { "source": "/success", "destination": "/index.html" }
+    { "source": "/success", "destination": "/index.html" },
+    { "source": "/track", "destination": "/index.html" },
+    { "source": "/faq", "destination": "/index.html" },
+    { "source": "/about", "destination": "/index.html" }
   ],
   "headers": [
     {
-      "source": "/(.*)\\.(woff2?|css|js|jsx|svg|webp|png|jpg|jpeg|mp3)$",
+      "source": "/fonts/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/demo/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(woff2?|css|js|jsx|svg|webp|png|jpg|jpeg)$",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

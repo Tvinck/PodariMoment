@@ -170,16 +170,16 @@ img{max-width:100%;display:block}
 .btn-ghost{padding:13px 22px;border-radius:999px;background:transparent;border:1.5px solid rgba(255,255,255,0.15);font-weight:500;font-size:13px;transition:all .2s;color:#fff;cursor:pointer}
 .btn-ghost:hover{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04)}
 .mascot{position:relative;height:440px}
-.mascot-card{position:absolute;border-radius:26px;padding:22px;font-weight:700;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 24px 50px rgba(0,0,0,0.4)}
+.mascot-card{position:absolute;border-radius:26px;padding:20px;font-weight:700;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;gap:0;box-shadow:0 24px 50px rgba(0,0,0,0.4)}
 .mc1{background:var(--peach);color:var(--peach-d);width:220px;height:260px;top:60px;left:30px;transform:rotate(-6deg);animation:f1 6s ease-in-out infinite}
 .mc2{background:var(--lilac);color:var(--lilac-d);width:190px;height:220px;top:0;right:30px;transform:rotate(8deg);animation:f2 7s ease-in-out infinite}
 .mc3{background:var(--mint);color:var(--mint-d);width:170px;height:180px;bottom:30px;right:90px;transform:rotate(-4deg);animation:f3 8s ease-in-out infinite}
 @keyframes f1{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-7deg) translateY(-10px)}}
 @keyframes f2{0%,100%{transform:rotate(8deg) translateY(0)}50%{transform:rotate(9deg) translateY(-14px)}}
 @keyframes f3{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(-5deg) translateY(-8px)}}
-.mc-title{font-size:18px;letter-spacing:-0.03em}
-.mc-icon{font-size:56px;opacity:0.85;text-align:center}
-.mc-price{align-self:flex-start;background:#0a0a0f;color:#fff;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.mc-label{font-size:14px;font-weight:700;letter-spacing:-0.02em}
+.mc-icon{font-size:52px;line-height:1;align-self:center;margin:auto 0}
+.mc-price{align-self:flex-start;background:rgba(0,0,0,0.25);color:inherit;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700}
 @media (max-width:920px){.mascot{display:none}.hero-mobile-strip{display:flex}}
 .hero-mobile-strip{display:none;gap:10px;margin-top:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 8px;-ms-overflow-style:none;scrollbar-width:none}
 .hero-mobile-strip::-webkit-scrollbar{display:none}
@@ -1425,9 +1425,9 @@ body.admin-view .tg-fab{display:none}
         </div>
       </div>
       <div class="mascot">
-        <div class="mascot-card mc1" style="background:linear-gradient(135deg,#cfe6ff,#6fb6ff);color:#06183a"><div class="mc-title">мальчик</div><div class="mc-icon">💙</div><div class="mc-price">MP3 · MP4</div></div>
-        <div class="mascot-card mc2" style="background:linear-gradient(135deg,#ffe2ec,#ff8fb4);color:#3a061a"><div class="mc-title">девочка</div><div class="mc-icon">💗</div><div class="mc-price">15–60 сек</div></div>
-        <div class="mascot-card mc3" style="background:linear-gradient(135deg,#fff3c2,#ffd166);color:#3a2906"><div class="mc-title">сюрприз</div><div class="mc-icon">❓</div><div class="mc-price">599 ₽</div></div>
+        <div class="mascot-card mc1" style="background:linear-gradient(135deg,#cfe6ff,#6fb6ff);color:#06183a"><div class="mc-label">мальчик</div><div class="mc-icon">💙</div><div class="mc-price">от 399 ₽</div></div>
+        <div class="mascot-card mc2" style="background:linear-gradient(135deg,#ffe2ec,#ff8fb4);color:#3a061a"><div class="mc-label">девочка</div><div class="mc-icon">💗</div><div class="mc-price">от 399 ₽</div></div>
+        <div class="mascot-card mc3" style="background:linear-gradient(135deg,#fff3c2,#ffd166);color:#3a2906"><div class="mc-label">сюрприз</div><div class="mc-icon">✨</div><div class="mc-price">от 399 ₽</div></div>
       </div>
       <div class="hero-mobile-strip">
         <div class="hms-card" style="background:linear-gradient(135deg,#cfe6ff,#6fb6ff);color:#06183a"><div class="hms-em">мальчик</div><div class="hms-icon">💙</div><div class="hms-name">для анонса</div></div>

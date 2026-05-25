@@ -489,6 +489,32 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .step{position:relative;overflow:hidden}
 .step::after{content:attr(data-step);position:absolute;bottom:-10px;right:-10px;font-size:120px;font-weight:800;font-family:'nauryzRedKeds','Space Grotesk',sans-serif;color:rgba(255,255,255,0.03);line-height:1;pointer-events:none;transition:color .3s;letter-spacing:-0.05em}
 .step:hover::after{color:rgba(255,107,53,0.06)}
+/* === FORM PROGRESS === */
+.form-progress{display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.fp-step{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fp-dot{width:28px;height:28px;border-radius:50%;background:var(--card2);border:2px solid var(--line);transition:all .3s var(--spring);display:grid;place-items:center}
+.fp-step.act .fp-dot{background:var(--grad);border-color:transparent;box-shadow:0 0 16px rgba(255,107,53,0.4)}
+.fp-step.done .fp-dot{background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.4)}
+.fp-step.done .fp-dot::after{content:"✓";font-size:12px;color:#86efac}
+.fp-line{flex:1;height:2px;background:var(--line);min-width:40px;max-width:80px;margin-bottom:20px}
+.fp-step span{font-size:10px;letter-spacing:0.08em;opacity:0.5;white-space:nowrap}
+.fp-step.act span{opacity:1}
+/* === GENDER CARDS === */
+.gender-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex-wrap:initial}
+.gender-card{padding:16px 12px !important;border-radius:18px !important;background:var(--card2) !important;border:2px solid transparent !important;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;transition:all .25s var(--spring);color:#fff !important}
+.gc-ico{font-size:32px;line-height:1}
+.gc-label{font-size:12px;font-weight:700;letter-spacing:-0.01em}
+.gender-card.boy.act{background:rgba(147,197,253,0.15) !important;border-color:rgba(147,197,253,0.4) !important;color:#93c5fd !important}
+.gender-card.girl.act{background:rgba(249,168,212,0.15) !important;border-color:rgba(249,168,212,0.4) !important;color:#f9a8d4 !important}
+.gender-card.surprise.act{background:rgba(255,209,102,0.15) !important;border-color:rgba(255,209,102,0.4) !important;color:var(--gold) !important}
+/* === ORDER FOOT CARD === */
+.order-foot-card{display:block !important;background:var(--bg2);border-radius:20px;padding:20px;border:1px solid var(--line);margin-top:8px;border-top:1px solid var(--line) !important}
+.order-summary{font-size:13px;opacity:0.7;margin-bottom:14px;line-height:1.5}
+.order-summary .os-old{text-decoration:line-through;opacity:0.5;margin-right:6px}
+.order-foot-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.cta-pay{padding:16px 32px !important;font-size:15px !important}
+.order-foot-trust{font-size:11px;opacity:0.4;margin-top:12px;text-align:center}
+@media (max-width:520px){.cta-pay{width:100%;justify-content:center}}
 
 /* === FAQ === */
 .faq-list{display:flex;flex-direction:column;gap:10px}
@@ -1542,7 +1568,14 @@ body.admin-view .tg-fab{display:none}
           </div>
         </div>
         <div id="prod-fields"></div>
-        <div class="order-foot"><div class="order-total"><div class="kicker">Итого</div><div class="order-price"><span id="op">599</span> ₽<small>с НДС</small></div></div><button class="cta" type="submit" id="gender-pay-btn">Оплатить →</button></div>
+        <div class="order-foot order-foot-card">
+          <div class="order-summary" id="order-summary"></div>
+          <div class="order-foot-row">
+            <div class="order-total"><div class="kicker">Итого</div><div class="order-price"><span id="op">599</span> ₽<small>с НДС</small></div></div>
+            <button class="cta cta-pay" type="submit" id="gender-pay-btn">💳 Оплатить →</button>
+          </div>
+          <div class="order-foot-trust">🔒 Безопасная оплата · ⚡ Файл за 5 минут</div>
+        </div>
       </form>
     </section>
   </div>
@@ -2048,16 +2081,24 @@ const FORMS = {
       </button>
     </div>
 
+    <div class="form-progress" id="form-progress">
+      <div class="fp-step act" data-n="1"><div class="fp-dot"></div><span>Параметры</span></div>
+      <div class="fp-line"></div>
+      <div class="fp-step" data-n="2"><div class="fp-dot"></div><span>Контакты</span></div>
+      <div class="fp-line"></div>
+      <div class="fp-step" data-n="3"><div class="fp-dot"></div><span>Оплата</span></div>
+    </div>
+
     <div class="form-step">
       <div class="form-step-head">
         <div class="form-step-num">1</div>
         <div class="form-step-title">Пол малыша</div>
         <div class="form-step-hint">обязательно</div>
       </div>
-      <div class="chips reveal-chips" data-group="greveal">
-        <div class="chip act" data-rv="boy">💙 Мальчик</div>
-        <div class="chip" data-rv="girl">💗 Девочка</div>
-        <div class="chip" data-rv="surprise">❓ Сюрприз</div>
+      <div class="chips reveal-chips gender-cards" data-group="greveal">
+        <div class="chip gender-card boy act" data-rv="boy"><span class="gc-ico">💙</span><span class="gc-label">Мальчик</span></div>
+        <div class="chip gender-card girl" data-rv="girl"><span class="gc-ico">💗</span><span class="gc-label">Девочка</span></div>
+        <div class="chip gender-card surprise" data-rv="surprise"><span class="gc-ico">✨</span><span class="gc-label">Сюрприз</span></div>
       </div>
       <div class="field-help">«Сюрприз» — ИИ сам бросит монетку и не покажет вам результат до раскрытия. Настоящий gender-reveal даже от себя.</div>
     </div>
@@ -4012,9 +4053,17 @@ function recalcGenderPrice(){
   const addEl = document.getElementById('gprice-add');
   if(sum) sum.textContent = price + ' ₽';
   if(addEl) addEl.textContent = promoState ? `−${promoState.discount_amount} ₽ по «${promoState.code}»` : 'тариф «' + (TARIFFS[t]||{}).label + '»';
-  const op = document.getElementById('op'); if(op) op.textContent = price;
-  const payBtn = document.getElementById('gender-pay-btn'); if(payBtn) payBtn.textContent = `Оплатить ${price} ₽ →`;
+  const op = document.getElementById('op'); if(op) op.innerHTML = (promoState ? `<span class="os-old">${base}</span>` : '') + price;
+  const payBtn = document.getElementById('gender-pay-btn'); if(payBtn) payBtn.textContent = `💳 Оплатить ${price} ₽ →`;
   const heroPrice = document.querySelector('.order-hero-priceval'); if(heroPrice) heroPrice.textContent = price + ' ₽';
+  // Сводка заказа
+  const sm = document.getElementById('order-summary');
+  if(sm){
+    const voice = document.querySelector('.voice-chips[data-group="gvoice"] .voice-chip.act');
+    const vlabel = voice ? voice.querySelector('.vc-label').textContent.trim() : '—';
+    const sc = (document.getElementById('gscenario')||{}).value || '—';
+    sm.innerHTML = `Тариф «${(TARIFFS[t]||{}).label}» · ${vlabel} · ${sc}` + (promoState?` · <span style="color:#86efac">промокод ${promoState.code}</span>`:'');
+  }
 }
 /**
  * @function applyPromo
@@ -4069,7 +4118,31 @@ function initGenderForm(){
   syncRevealStage();
   recalcGenderPrice();
   initDemoPlayer();
+  syncFormProgress();
+  const of=document.getElementById('order-form');
+  if(of && !of.__fp){ of.__fp=1; of.addEventListener('input', syncFormProgress); of.addEventListener('click', ()=>setTimeout(syncFormProgress,0)); }
 }
+/**
+ * @function syncFormProgress
+ * @description Обновляет индикатор шагов формы (Параметры/Контакты/Оплата)
+ *              по мере заполнения полей.
+ */
+function syncFormProgress(){
+  const fp=document.getElementById('form-progress'); if(!fp) return;
+  const val=id=>((document.getElementById(id)||{}).value||'').trim();
+  const step1 = !!document.querySelector('[data-group="greveal"] .act');
+  const step2 = !!val('gparents') && !!val('gdate');
+  const step3 = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('gemail'));
+  const steps = fp.querySelectorAll('.fp-step');
+  const states = [step1, step2, step3];
+  // активный = первый незавершённый, завершённые помечаем done
+  let activeIdx = states.findIndex(s=>!s); if(activeIdx===-1) activeIdx=2;
+  steps.forEach((el,i)=>{
+    el.classList.toggle('done', states[i] && i<activeIdx || (states[i] && i!==activeIdx));
+    el.classList.toggle('act', i===activeIdx);
+  });
+}
+window.syncFormProgress = syncFormProgress;
 
 document.addEventListener('click', e=>{
   const tcard = e.target.closest('.tariff-card');

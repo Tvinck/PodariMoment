@@ -469,6 +469,7 @@ select.input{appearance:none;-webkit-appearance:none;background-image:url("data:
 .footer-legal-row a:hover{color:var(--orange)}
 @media (max-width:520px){.footer-legal{flex-direction:column}.footer-legal-block.right{text-align:left;align-items:flex-start}}
 .footer-trust{text-align:center;padding:16px 0 4px;font-size:11px;opacity:0.4;letter-spacing:0.02em}
+@keyframes ripple{to{transform:scale(2.5);opacity:0}}
 /* === HERO POLISH === */
 .hero{position:relative}
 .hero-glow{position:absolute;width:600px;height:300px;max-width:90vw;background:radial-gradient(ellipse,rgba(255,107,53,0.12) 0%,transparent 70%);top:40%;left:-100px;transform:translateY(-50%);pointer-events:none;filter:blur(40px);z-index:0}
@@ -3708,6 +3709,16 @@ window.addEventListener('scroll', ()=>{ const h=document.getElementById('scroll-
 const ordersCache = createCache(30000);
 const crmCache = createCache(60000);
 window.showToast = showToast;
+// Ripple-эффект на кнопках
+function addRipple(e){
+  const btn=e.currentTarget; const d=Math.max(btn.clientWidth,btn.clientHeight); const r=btn.getBoundingClientRect();
+  const c=document.createElement('span');
+  c.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px;position:absolute;border-radius:50%;background:rgba(255,255,255,0.25);transform:scale(0);animation:ripple .5s ease-out;pointer-events:none`;
+  const cs=getComputedStyle(btn); if(cs.position==='static') btn.style.position='relative';
+  btn.style.overflow='hidden'; btn.appendChild(c); setTimeout(()=>c.remove(),500);
+}
+document.addEventListener('click', e=>{ const b=e.target.closest('.cta, .btn-ghost'); if(b) addRipple.call(null,{currentTarget:b,clientX:e.clientX,clientY:e.clientY}); });
+
 /**
  * @function track
  * @description Безопасная отправка цели в Яндекс.Метрику/GA. Не падает,
